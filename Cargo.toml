@@ -2,25 +2,41 @@
 name = "boyar_tournament"
 version = "0.1.0"
 edition = "2021"
+publish = false
+
+[workspace]
+members = ["mobile"]
+
+[dependencies]
+bevy = "0.14.2"
+log = { version = "0.4", features = [
+    "max_level_debug",
+    "release_max_level_warn",
+] }
+
+[features]
+dev = [
+    "bevy/dynamic_linking",
+    "bevy/bevy_dev_tools",
+    "bevy/file_watcher",
+    "bevy/embedded_watcher",
+]
+
+[lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"
 
 [profile.dev]
 opt-level = 1
 
-[profile.release]
-codegen-units = 1
-lto = "thin"
-
-[profile.wasm-release]
-inherits = "release"
-opt-level = "s"
-strip = "debuginfo"
-
 [profile.dev.package."*"]
 opt-level = 3
 
-[dependencies]
-bevy = "0.14.2"
-log = { version = "*", features = [
-    "max_level_debug",
-    "release_max_level_warn",
-] }
+[profile.dev.package.wgpu-types]
+debug-assertions = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
