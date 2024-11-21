@@ -9,9 +9,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, update_scaled_sprites);
 
     #[cfg(debug_assertions)]
-    {
-        app.add_systems(Update, draw_draw_region_outline);
-    }
+    app.add_systems(Update, draw_draw_region_outline);
 }
 
 /// Регион 9x16(состоит из квадратов), внутри которого происходит вся отрисовка
@@ -62,11 +60,13 @@ fn update_scaled_sprites(
     }
 }
 
+#[cfg(debug_assertions)]
 fn draw_draw_region_outline(mut gizmos: Gizmos, draw_region: Res<DrawRegion>) {
-    gizmos.rect_2d(
+    gizmos.grid_2d(
         Vec2::ZERO,
         0.,
-        vec2(draw_region.width, draw_region.height),
+        UVec2::new(9, 16),
+        vec2(draw_region.width / 9., draw_region.height / 16.),
         Color::srgb(1., 0., 0.),
-    );
+    ).outer_edges();
 }
