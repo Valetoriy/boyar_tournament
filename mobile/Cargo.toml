@@ -26,3 +26,4 @@ target_sdk_version = 35
 [package.metadata.android.application]
 icon = "@mipmap/android_icon"
 label = "Boyar Tournament"
+theme = "@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
