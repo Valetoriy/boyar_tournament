@@ -1,5 +1,6 @@
 #[cfg(debug_assertions)]
 mod dev_tools;
+mod scaling;
 
 use bevy::{audio::Volume, prelude::*};
 
@@ -23,8 +24,9 @@ impl Plugin for GamePlugin {
 
         app.insert_resource(GlobalVolume {
             volume: Volume::new(0.3),
-            ..default()
         });
+
+        app.add_plugins(scaling::plugin);
 
         #[cfg(debug_assertions)]
         app.add_plugins(dev_tools::plugin);
