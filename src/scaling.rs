@@ -27,7 +27,7 @@ struct DrawRegion {
 /// Значения равны доле квадрата из DrawRegion
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-struct ScaleSize(f32, f32);
+pub struct ScaleSize(pub f32, pub f32);
 
 fn update_draw_region(
     mut draw_region: ResMut<DrawRegion>,

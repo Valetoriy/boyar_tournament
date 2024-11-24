@@ -9,7 +9,7 @@ use bevy::{
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
-use crate::GameState;
+use crate::screens::GameState;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, log_transitions::<GameState>);
