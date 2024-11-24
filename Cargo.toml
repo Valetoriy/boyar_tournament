@@ -10,6 +10,7 @@ members = ["mobile"]
 [dependencies]
 bevy = { version = "0.14.2", features = ["bevy_dev_tools"] }
 bevy-inspector-egui = "0.27.0"
+bevy_asset_loader = "0.21.0"
 image = "0.25.5"
 log = { version = "0.4", features = [
     "max_level_debug",

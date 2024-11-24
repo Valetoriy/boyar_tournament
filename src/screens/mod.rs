@@ -16,5 +16,5 @@ pub enum GameState {
     Splash,
     Loading,
     // Menu,
-    // Gameplay,
+    Gameplay,
 }

@@ -38,13 +38,10 @@ fn spawn_splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
         StateScoped(GameState::Splash),
         ScaledTransform::new(0.5, (0., 0.)),
     ));
-    cmd.spawn((
-        AudioBundle {
-            source: asset_server.load("screens/splash/splash.ogg"),
-            ..default()
-        },
-        StateScoped(GameState::Splash),
-    ));
+    cmd.spawn((AudioBundle {
+        source: asset_server.load("screens/splash/splash.ogg"),
+        settings: PlaybackSettings::DESPAWN,
+    },));
 }
 
 #[derive(Component)]
