@@ -3,19 +3,19 @@ use bevy::{math::vec2, prelude::*, window::WindowResized};
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<DrawRegion>();
     app.register_type::<DrawRegion>();
-    app.register_type::<ScaleSize>();
+    app.register_type::<ScaledTransform>();
 
-    app.add_systems(
-        PreUpdate,
-        (update_draw_region, update_scaled_sprites).chain(),
-    );
+    // TODO: для дебаг сборок использовать версию с EventReader вместо Trigger чтобы не нужно
+    // было дёргать окно для просмотра изменений ScaledTransform
+    app.add_systems(PreUpdate, update_draw_region)
+        .observe(update_scaled_transform);
 
     #[cfg(debug_assertions)]
     app.add_systems(Update, draw_draw_region_outline);
 }
 
 /// Регион 9x16(состоит из квадратов), внутри которого происходит вся отрисовка
-/// Длина и ширина его сторон определяют размер для всех Sprite
+/// Длина и ширина его сторон определяют размер для всех сущностей
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
 struct DrawRegion {
@@ -23,16 +23,18 @@ struct DrawRegion {
     height: f32,
 }
 
-/// Component для регулирования размеров Sprite
-/// Значения равны доле квадрата из DrawRegion
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct ScaleSize(pub f32, pub f32);
+#[derive(Event)]
+struct UpdateScaling;
 
 fn update_draw_region(
+    mut cmd: Commands,
     mut draw_region: ResMut<DrawRegion>,
     mut resize_events: EventReader<WindowResized>,
 ) {
+    if resize_events.is_empty() {
+        return;
+    }
+
     for r_e in resize_events.read() {
         let (aspect_ratio_width, aspect_ratio_height) = (9., 16.);
         let (window_width, window_height) = (r_e.width, r_e.height);
@@ -47,18 +49,36 @@ fn update_draw_region(
             draw_region.height = draw_region.width / aspect_ratio_width * aspect_ratio_height;
         }
     }
+
+    cmd.trigger(UpdateScaling);
 }
 
-fn update_scaled_sprites(
-    mut scaled_sprites: Query<(&mut Sprite, &ScaleSize)>,
+/// Компонент для регулирования размеров Sprite
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct ScaledTransform {
+    /// Значение scale в компоненте Transform при размере окна игры 1920x1080
+    pub scale: f32,
+    /// Расположение сущности в квадратах DrawRegion
+    pub translation: (f32, f32),
+}
+
+impl ScaledTransform {
+    pub fn new(scale: f32, translation: (f32, f32)) -> Self {
+        Self { scale, translation }
+    }
+}
+
+fn update_scaled_transform(
+    _: Trigger<UpdateScaling>,
+    mut scaled_transform: Query<(&mut Transform, &ScaledTransform)>,
     draw_region: Res<DrawRegion>,
 ) {
-    for (mut sprite, scale_size) in &mut scaled_sprites {
-        sprite.custom_size = vec2(
-            draw_region.width / 9. * scale_size.0,
-            draw_region.height / 16. * scale_size.1,
-        )
-        .into();
+    for (mut transform, scaled_transform) in &mut scaled_transform {
+        transform.scale = Vec3::splat(scaled_transform.scale) * draw_region.height / 1080.;
+
+        transform.translation.x = scaled_transform.translation.0 * draw_region.width / 9.;
+        transform.translation.y = scaled_transform.translation.1 * draw_region.height / 16.;
     }
 }
 

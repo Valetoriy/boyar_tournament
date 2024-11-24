@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::scaling::ScaleSize;
+use crate::scaling::ScaledTransform;
 
 use super::GameState;
 
@@ -36,12 +36,15 @@ fn spawn_splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
             t: 0.,
         },
         StateScoped(GameState::Splash),
-        ScaleSize(6., 6.),
+        ScaledTransform::new(0.5, (0., 0.)),
     ));
-    cmd.spawn(AudioBundle {
-        source: asset_server.load("screens/splash/splash.ogg"),
-        ..default()
-    });
+    cmd.spawn((
+        AudioBundle {
+            source: asset_server.load("screens/splash/splash.ogg"),
+            ..default()
+        },
+        StateScoped(GameState::Splash),
+    ));
 }
 
 #[derive(Component)]
