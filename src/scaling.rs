@@ -83,7 +83,19 @@ fn update_scaled_transform(
 }
 
 #[cfg(debug_assertions)]
-fn draw_draw_region_outline(mut gizmos: Gizmos, draw_region: Res<DrawRegion>) {
+fn draw_draw_region_outline(
+    mut toggle: Local<bool>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut gizmos: Gizmos,
+    draw_region: Res<DrawRegion>,
+) {
+    if keyboard.just_pressed(KeyCode::Backquote) {
+        *toggle ^= true;
+    }
+    if !*toggle {
+        return;
+    }
+
     gizmos
         .grid_2d(
             Vec2::ZERO,
