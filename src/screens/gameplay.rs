@@ -40,6 +40,7 @@ fn spawn_test(
     cmd.insert_resource(ClearColor(Color::linear_rgb(0.569, 0.065, 0.073)));
 
     cmd.spawn((
+        Name::new("Top text"),
         Text2dBundle {
             text: Text::from_section(
                 "Здесь будет калс...",
@@ -56,6 +57,7 @@ fn spawn_test(
     ));
 
     cmd.spawn((
+        Name::new("Правый амогус"),
         AsepriteAnimationBundle {
             aseprite: red_assets.model.clone(),
             animation: Animation::default().with_tag("la").with_speed(0.8),
@@ -65,6 +67,7 @@ fn spawn_test(
         ScaledTransform::new(5.5, (1.4, 3.)),
     ));
     cmd.spawn((
+        Name::new("Левый амогус"),
         AsepriteAnimationBundle {
             aseprite: red_assets.model.clone(),
             animation: Animation::default().with_tag("ra"),
@@ -75,6 +78,7 @@ fn spawn_test(
     ));
 
     cmd.spawn((
+        Name::new("LONDON text"),
         Text2dBundle {
             text: Text::from_section(
                 "LONDON",
@@ -91,6 +95,7 @@ fn spawn_test(
     ));
 
     cmd.spawn((
+        Name::new("Tixon"),
         AsepriteAnimationBundle {
             aseprite: red_assets.tixon.clone(),
             animation: Animation::default(),
