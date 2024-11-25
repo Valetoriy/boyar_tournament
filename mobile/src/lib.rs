@@ -6,15 +6,17 @@ use boyar_tournament::GamePlugin;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Window {
-                    resizable: false,
-                    mode: WindowMode::BorderlessFullscreen,
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Window {
+                        resizable: false,
+                        mode: WindowMode::BorderlessFullscreen,
+                        ..default()
+                    }
+                    .into(),
                     ..default()
-                }
-                .into(),
-                ..default()
-            }),
+                })
+                .set(ImagePlugin::default_nearest()),
             GamePlugin,
         ))
         .run();

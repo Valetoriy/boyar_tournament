@@ -52,7 +52,7 @@ fn spawn_test(
             ..default()
         },
         StateScoped(GameState::Gameplay),
-        ScaledTransform::new(1., (-1., 7.)),
+        ScaledTransform::new(1., (-0.5, 7.)),
     ));
 
     cmd.spawn((
