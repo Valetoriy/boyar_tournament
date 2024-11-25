@@ -1,29 +1,8 @@
-Анимации spritesheet'ов
-    https://github.com/merwaaan/bevy_spritesheet_animation
-
-Взаимодейтсвие с aseprite
-    https://github.com/Lommix/bevy_aseprite_ultra
-
-Загрузка asset'ов
-    https://github.com/NiklasEi/bevy_asset_loader
-
-Изучение wgsl шейдеров
-    https://github.com/alphastrata/shadplay
-
-Управление звуком
-    https://github.com/NiklasEi/bevy_kira_audio
-
-? Информация по курсору
-    https://github.com/tguichaoua/bevy_cursor
-
 shell-команды
     https://github.com/edouardpoitras/bevy_local_commands
 
 Физика игры
     https://github.com/Jondolf/avian
-
-FPS счётчик
-    https://github.com/laundmo/bevy_screen_diagnostics
 
 Виджет для ввода текста
     https://github.com/rparrett/bevy_simple_text_input

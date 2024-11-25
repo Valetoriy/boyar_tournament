@@ -1,9 +1,7 @@
 // Выключить коммандную строку в релиз-сборках для Windows
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use bevy::{
-    asset::AssetMetaCheck, prelude::*, window::PrimaryWindow, winit::WinitWindows,
-};
+use bevy::{asset::AssetMetaCheck, prelude::*, window::PrimaryWindow, winit::WinitWindows};
 use boyar_tournament::GamePlugin;
 use std::io::Cursor;
 use winit::window::Icon;
@@ -20,6 +18,7 @@ fn main() {
                     .into(),
                     ..default()
                 })
+                .set(ImagePlugin::default_nearest())
                 .set(AssetPlugin {
                     meta_check: AssetMetaCheck::Never,
                     ..default()
