@@ -5,10 +5,10 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<DrawRegion>();
     app.register_type::<ScaledTransform>();
 
-    // TODO: для дебаг сборок использовать версию с EventReader вместо Trigger чтобы не нужно
-    // было дёргать окно для просмотра изменений ScaledTransform
-    app.add_systems(PreUpdate, update_draw_region)
-        .observe(update_scaled_transform);
+    app.add_systems(
+        PreUpdate,
+        (update_draw_region, update_scaled_transform).chain(),
+    );
 
     #[cfg(debug_assertions)]
     app.add_systems(Update, draw_draw_region_outline);
@@ -23,11 +23,7 @@ struct DrawRegion {
     height: f32,
 }
 
-#[derive(Event)]
-struct UpdateScaling;
-
 fn update_draw_region(
-    mut cmd: Commands,
     mut draw_region: ResMut<DrawRegion>,
     mut resize_events: EventReader<WindowResized>,
 ) {
@@ -49,8 +45,6 @@ fn update_draw_region(
             draw_region.height = draw_region.width / aspect_ratio_width * aspect_ratio_height;
         }
     }
-
-    cmd.trigger(UpdateScaling);
 }
 
 /// Компонент для регулирования размеров Sprite
@@ -70,7 +64,6 @@ impl ScaledTransform {
 }
 
 fn update_scaled_transform(
-    _: Trigger<UpdateScaling>,
     mut scaled_transform: Query<(&mut Transform, &ScaledTransform)>,
     draw_region: Res<DrawRegion>,
 ) {
@@ -89,7 +82,7 @@ fn draw_draw_region_outline(
     mut gizmos: Gizmos,
     draw_region: Res<DrawRegion>,
 ) {
-    if keyboard.just_pressed(KeyCode::Backquote) {
+    if keyboard.just_pressed(KeyCode::Digit1) {
         *toggle ^= true;
     }
     if !*toggle {
