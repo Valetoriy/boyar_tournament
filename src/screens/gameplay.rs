@@ -11,97 +11,59 @@ pub(super) fn plugin(app: &mut App) {
 
     app.configure_loading_state(
         LoadingStateConfig::new(GameState::Loading)
-            .load_collection::<FontAssets>()
-            .load_collection::<RedAssets>(),
+            .load_collection::<CardsAssets>()
+            .load_collection::<ArenaAssets>(),
     );
 
     app.add_systems(OnEnter(GameState::Gameplay), spawn_test);
 }
 
 #[derive(AssetCollection, Resource)]
-struct FontAssets {
-    #[asset(path = "Keleti-Regular.ttf")]
-    main_font: Handle<Font>,
+struct ArenaAssets {
+    #[asset(path = "reference/cr_far.png")]
+    arena_reference: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
-struct RedAssets {
-    #[asset(path = "cards/red/red.aseprite")]
-    model: Handle<Aseprite>,
-    #[asset(path = "tixon.aseprite")]
-    tixon: Handle<Aseprite>,
+struct CardsAssets {
+    #[asset(path = "cards.aseprite")]
+    cards: Handle<Aseprite>,
 }
 
 fn spawn_test(
     mut cmd: Commands,
-    font_assets: ResMut<FontAssets>,
-    red_assets: ResMut<RedAssets>,
+    arena_assets: ResMut<ArenaAssets>,
+    cards_assets: ResMut<CardsAssets>,
 ) {
-    cmd.insert_resource(ClearColor(Color::linear_rgb(0.569, 0.065, 0.073)));
-
     cmd.spawn((
-        Name::new("Top text"),
-        Text2dBundle {
-            text: Text::from_section(
-                "Здесь будет калс...",
-                TextStyle {
-                    font: font_assets.main_font.clone(),
-                    font_size: 70.,
-                    color: Color::srgb(1., 1., 0.),
-                },
-            ),
-            ..default()
-        },
-        StateScoped(GameState::Gameplay),
-        ScaledTransform::new(1., (-0.5, 7.)),
-    ));
-
-    cmd.spawn((
-        Name::new("Правый амогус"),
-        AsepriteAnimationBundle {
-            aseprite: red_assets.model.clone(),
-            animation: Animation::default().with_tag("la").with_speed(0.8),
-            ..default()
-        },
-        StateScoped(GameState::Gameplay),
-        ScaledTransform::new(5.5, (1.4, 3.)),
-    ));
-    cmd.spawn((
-        Name::new("Левый амогус"),
-        AsepriteAnimationBundle {
-            aseprite: red_assets.model.clone(),
-            animation: Animation::default().with_tag("ra"),
-            ..default()
-        },
-        StateScoped(GameState::Gameplay),
-        ScaledTransform::new(5.5, (-1.2, 3.)),
-    ));
-
-    cmd.spawn((
-        Name::new("LONDON text"),
-        Text2dBundle {
-            text: Text::from_section(
-                "LONDON",
-                TextStyle {
-                    font: font_assets.main_font.clone(),
-                    font_size: 70.,
-                    color: Color::srgb(1., 1., 0.),
-                },
-            ),
+        Name::new("Референс арены"),
+        SpriteBundle {
+            texture: arena_assets.arena_reference.clone(),
             ..default()
         },
         StateScoped(GameState::Gameplay),
         ScaledTransform::new(1., (0., 0.)),
-    ));
+    ))
+    .insert(Transform::from_translation(Vec3::ZERO.with_z(-1.)));
 
-    cmd.spawn((
-        Name::new("Tixon"),
-        AsepriteAnimationBundle {
-            aseprite: red_assets.tixon.clone(),
-            animation: Animation::default(),
-            ..default()
-        },
-        StateScoped(GameState::Gameplay),
-        ScaledTransform::new(7.5, (0., -4.)),
-    ));
+    for (i, card) in [
+        ("red", -2.5),
+        ("blue", -0.67),
+        ("green", 1.17),
+        ("yellow", 3.),
+    ]
+    .iter()
+    .enumerate()
+    {
+        cmd.spawn((
+            Name::new(format!("Карта {}", i + 1)),
+            AsepriteSliceBundle {
+                slice: AsepriteSlice::new(card.0),
+                aseprite: cards_assets.cards.clone(),
+                ..default()
+            },
+            StateScoped(GameState::Gameplay),
+            ScaledTransform::new(1.8, (card.1, -6.28)),
+        ));
+    }
 }

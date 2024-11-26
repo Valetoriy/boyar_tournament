@@ -82,7 +82,7 @@ fn draw_draw_region_outline(
     mut gizmos: Gizmos,
     draw_region: Res<DrawRegion>,
 ) {
-    if keyboard.just_pressed(KeyCode::Digit1) {
+    if keyboard.just_pressed(KeyCode::F1) {
         *toggle ^= true;
     }
     if !*toggle {
