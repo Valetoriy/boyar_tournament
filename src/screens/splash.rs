@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::scaling::ScaledTransform;
+use crate::scaling::DynamicScale;
 
 use super::GameState;
 
@@ -26,8 +26,8 @@ const SPLASH_FADE_DURATION_SEC: f32 = 0.75;
 
 fn spawn_splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
     cmd.spawn((
-        SpriteBundle {
-            texture: asset_server.load("screens/splash/valetoriy.png"),
+        Sprite {
+            image: asset_server.load("screens/splash/valetoriy.png"),
             ..default()
         },
         ImageFadeInOut {
@@ -36,12 +36,12 @@ fn spawn_splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
             t: 0.,
         },
         StateScoped(GameState::Splash),
-        ScaledTransform::new(0.5, (0., 0.)),
+        DynamicScale(0.5),
     ));
-    cmd.spawn((AudioBundle {
-        source: asset_server.load("screens/splash/splash.ogg"),
-        settings: PlaybackSettings::DESPAWN,
-    },));
+    cmd.spawn((
+        AudioPlayer::new(asset_server.load("screens/splash/splash.ogg")),
+        PlaybackSettings::DESPAWN,
+    ));
 }
 
 #[derive(Component)]
@@ -67,7 +67,7 @@ fn update_fade_in_out(
     mut animation_query: Query<(&mut ImageFadeInOut, &mut Sprite)>,
 ) {
     let (mut anim, mut sprite) = animation_query.single_mut();
-    anim.t += time.delta_seconds();
+    anim.t += time.delta_secs();
     sprite.color.set_alpha(anim.alpha())
 }
 

@@ -1,13 +1,19 @@
-use bevy::{math::vec2, prelude::*, window::WindowResized};
+use bevy::{prelude::*, window::WindowResized};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<DrawRegion>();
     app.register_type::<DrawRegion>();
-    app.register_type::<ScaledTransform>();
+    app.register_type::<DynamicScale>();
+    app.register_type::<DynamicTransform>();
 
     app.add_systems(
         PreUpdate,
-        (update_draw_region, update_scaled_transform).chain(),
+        (
+            update_draw_region,
+            update_dynamic_scale,
+            update_dynamic_transform,
+        )
+            .chain(),
     );
 
     #[cfg(debug_assertions)]
@@ -18,9 +24,9 @@ pub(super) fn plugin(app: &mut App) {
 /// Длина и ширина его сторон определяют размер для всех сущностей
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
-struct DrawRegion {
-    width: f32,
-    height: f32,
+pub struct DrawRegion {
+    pub width: f32,
+    pub height: f32,
 }
 
 fn update_draw_region(
@@ -48,30 +54,33 @@ fn update_draw_region(
 }
 
 /// Компонент для регулирования размеров Sprite
+/// Значение scale в компоненте Transform при размере окна игры 1920x1080
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-pub struct ScaledTransform {
-    /// Значение scale в компоненте Transform при размере окна игры 1920x1080
-    pub scale: f32,
-    /// Расположение сущности в квадратах DrawRegion
-    pub translation: (f32, f32),
-}
+pub struct DynamicScale(pub f32);
 
-impl ScaledTransform {
-    pub fn new(scale: f32, translation: (f32, f32)) -> Self {
-        Self { scale, translation }
+fn update_dynamic_scale(
+    mut dynamic_scale: Query<(&mut Transform, &DynamicScale)>,
+    draw_region: Res<DrawRegion>,
+) {
+    for (mut transform, dynamic_scale) in &mut dynamic_scale {
+        transform.scale = Vec3::splat(dynamic_scale.0) * draw_region.height / 1080.;
     }
 }
 
-fn update_scaled_transform(
-    mut scaled_transform: Query<(&mut Transform, &ScaledTransform)>,
+/// Компонент для регулирования размеров Sprite
+/// Расположение сущности в квадратах DrawRegion
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct DynamicTransform(pub f32, pub f32);
+
+fn update_dynamic_transform(
+    mut dynamic_transform: Query<(&mut Transform, &DynamicTransform)>,
     draw_region: Res<DrawRegion>,
 ) {
-    for (mut transform, scaled_transform) in &mut scaled_transform {
-        transform.scale = Vec3::splat(scaled_transform.scale) * draw_region.height / 1080.;
-
-        transform.translation.x = scaled_transform.translation.0 * draw_region.width / 9.;
-        transform.translation.y = scaled_transform.translation.1 * draw_region.height / 16.;
+    for (mut transform, dynamic_transform) in &mut dynamic_transform {
+        transform.translation.x = dynamic_transform.0 * draw_region.width / 9.;
+        transform.translation.y = dynamic_transform.1 * draw_region.height / 16.;
     }
 }
 
@@ -82,6 +91,8 @@ fn draw_draw_region_outline(
     mut gizmos: Gizmos,
     draw_region: Res<DrawRegion>,
 ) {
+    use bevy::math::vec2;
+
     if keyboard.just_pressed(KeyCode::F1) {
         *toggle ^= true;
     }
@@ -91,8 +102,7 @@ fn draw_draw_region_outline(
 
     gizmos
         .grid_2d(
-            Vec2::ZERO,
-            0.,
+            Isometry2d::IDENTITY,
             UVec2::new(9, 16),
             vec2(draw_region.width / 9., draw_region.height / 16.),
             Color::srgb(1., 0., 0.),

@@ -1,0 +1,101 @@
+use bevy::prelude::*;
+use bevy_aseprite_ultra::prelude::*;
+use bevy_asset_loader::prelude::*;
+
+use crate::{scaling::DynamicScale, screens::GameState};
+
+#[cfg(debug_assertions)]
+use crate::scaling::DrawRegion;
+
+pub(super) fn plugin(app: &mut App) {
+    app.register_type::<ArenaPos>();
+
+    app.configure_loading_state(
+        LoadingStateConfig::new(GameState::Loading).load_collection::<ArenaAssets>(),
+    );
+
+    app.add_systems(OnEnter(GameState::Gameplay), spawn_arena);
+
+    app.add_systems(Update, update_arena_pos);
+
+    #[cfg(debug_assertions)]
+    {
+        app.add_systems(Update, draw_arena_region_outline);
+    }
+}
+
+#[derive(AssetCollection, Resource)]
+struct ArenaAssets {
+    #[asset(path = "arena_template.aseprite")]
+    arena_template: Handle<Aseprite>,
+    #[asset(path = "cards/red/red.aseprite")]
+    red: Handle<Aseprite>,
+}
+
+fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
+    cmd.spawn((
+        Name::new("Шаблон арены"),
+        AseSpriteSlice {
+            name: "arena_template".into(),
+            aseprite: arena_assets.arena_template.clone(),
+        },
+        StateScoped(GameState::Gameplay),
+        DynamicScale(1.),
+        Transform::from_translation(Vec3::ZERO.with_z(-0.5)),
+    ));
+
+    cmd.spawn((
+        Name::new("Амогус"),
+        AseSpriteAnimation {
+            animation: Animation::tag("d"),
+            aseprite: arena_assets.red.clone(),
+        },
+        StateScoped(GameState::Gameplay),
+        DynamicScale(1.),
+        ArenaPos(-1., -1.),
+    ));
+}
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+struct ArenaPos(pub f32, pub f32);
+
+fn update_arena_pos(
+    mut arena_pos: Query<(&mut Transform, &ArenaPos)>,
+    draw_region: Res<DrawRegion>,
+) {
+    for (mut transform, arena_pos) in &mut arena_pos {
+        transform.translation.x = arena_pos.0 * draw_region.width / 19.61;
+        transform.translation.y =
+            arena_pos.1 * draw_region.height / 43.2 + draw_region.height / 13.5;
+
+        // Чем ниже сущность на арене тем "выше" она отображается
+        transform.translation.z = transform.translation.y / draw_region.height * -1.;
+    }
+}
+
+#[cfg(debug_assertions)]
+fn draw_arena_region_outline(
+    mut toggle: Local<bool>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut gizmos: Gizmos,
+    draw_region: Res<DrawRegion>,
+) {
+    use bevy::math::vec2;
+
+    if keyboard.just_pressed(KeyCode::F2) {
+        *toggle ^= true;
+    }
+    if !*toggle {
+        return;
+    }
+
+    gizmos
+        .grid_2d(
+            Isometry2d::from_translation(vec2(0., draw_region.height / 13.5)),
+            UVec2::new(18, 32),
+            vec2(draw_region.width / 19.61, draw_region.height / 43.2),
+            Color::srgb(1., 0.65, 0.),
+        )
+        .outer_edges();
+}
