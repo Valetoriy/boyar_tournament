@@ -1,35 +1,6 @@
-[package]
-name = "boyar_tournament"
-version = "0.1.0"
-edition = "2021"
-publish = false
-
 [workspace]
-members = ["mobile"]
-
-[dependencies]
-bevy = { version = "0.15.0", features = ["bevy_dev_tools"] }
-bevy-inspector-egui = "0.28.0"
-bevy_aseprite_ultra = "0.3.0"
-bevy_asset_loader = "0.22.0-rc.1"
-image = "0.25.5"
-log = { version = "0.4.22", features = [
-    "max_level_debug",
-    "release_max_level_warn",
-] }
-winit = "0.30.5"
-
-[features]
-dev = [
-    "bevy/dynamic_linking",
-    "bevy/bevy_dev_tools",
-    "bevy/file_watcher",
-    "bevy/embedded_watcher",
-]
-
-[lints.clippy]
-too_many_arguments = "allow"
-type_complexity = "allow"
+members = ["boyar_tournament", "desktop_client", "mobile_client", "server"]
+resolver = "2"
 
 [profile.dev]
 opt-level = 1

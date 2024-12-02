@@ -21,6 +21,8 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(AssetPlugin {
                     meta_check: AssetMetaCheck::Never,
+                    file_path: "../assets".into(),
+                    processed_file_path: "../assets".into(),
                     ..default()
                 }),
         )
@@ -37,7 +39,7 @@ fn set_window_icon(
     let Some(primary_window) = windows.get_window(primary_window) else {
         return;
     };
-    let icon_buf = Cursor::new(include_bytes!("../resources/desktop_icon.png"));
+    let icon_buf = Cursor::new(include_bytes!("../../resources/desktop_icon.png"));
     if let Ok(image) = image::load(icon_buf, image::ImageFormat::Png) {
         let image = image.into_rgba8();
         let (width, height) = image.dimensions();

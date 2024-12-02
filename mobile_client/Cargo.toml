@@ -1,15 +1,15 @@
 [package]
-name = "mobile"
+name = "mobile_client"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "mobile"
+name = "mobile_client"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-boyar_tournament = { path = ".." }
+boyar_tournament = { path = "../boyar_tournament" }
 bevy = { version = "0.15", default-features = false }
 
 [package.metadata.android]
