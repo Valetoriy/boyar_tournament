@@ -4,7 +4,6 @@ use bevy_asset_loader::prelude::*;
 
 use crate::{scaling::DynamicScale, screens::GameState};
 
-#[cfg(debug_assertions)]
 use crate::scaling::DrawRegion;
 
 pub(super) fn plugin(app: &mut App) {
