@@ -39,7 +39,7 @@ fn set_window_icon(
     let Some(primary_window) = windows.get_window(primary_window) else {
         return;
     };
-    let icon_buf = Cursor::new(include_bytes!("../../resources/desktop_icon.png"));
+    let icon_buf = Cursor::new(include_bytes!("../../assets/icons/desktop_icon.png"));
     if let Ok(image) = image::load(icon_buf, image::ImageFormat::Png) {
         let image = image.into_rgba8();
         let (width, height) = image.dimensions();

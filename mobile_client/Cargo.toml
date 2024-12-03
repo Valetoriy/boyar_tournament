@@ -17,7 +17,7 @@ package = "valetoriy.boyar_tournament"
 apk_name = "BoyarTournament"
 assets = "../assets"
 strip = "strip"
-resources = "../resources/android"
+resources = "../assets/icons/android/"
 build_targets = ["aarch64-linux-android"]
 
 [package.metadata.android.sdk]
