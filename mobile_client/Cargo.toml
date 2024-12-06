@@ -10,7 +10,9 @@ crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 boyar_tournament = { path = "../boyar_tournament" }
-bevy = { version = "0.15", default-features = false }
+bevy = { version = "0.15", default-features = false, features = [
+    "android-native-activity",
+] }
 
 [package.metadata.android]
 package = "valetoriy.boyar_tournament"
