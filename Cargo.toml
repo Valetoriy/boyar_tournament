@@ -1,5 +1,5 @@
 [workspace]
-members = ["boyar_tournament", "desktop_client", "mobile_client", "server"]
+members = ["boyar_tournament", "common", "desktop_client", "mobile_client", "server"]
 resolver = "2"
 
 [workspace.lints.clippy]

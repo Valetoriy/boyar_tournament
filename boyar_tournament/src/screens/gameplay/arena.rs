@@ -5,6 +5,7 @@ use bevy_asset_loader::prelude::*;
 use crate::{scaling::DynamicScale, screens::GameState};
 
 use crate::scaling::DrawRegion;
+use common::ArenaPos;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<ArenaPos>();
@@ -15,20 +16,26 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(OnEnter(GameState::Gameplay), spawn_arena);
 
-    app.add_systems(Update, update_arena_pos);
+    app.add_systems(
+        Update,
+        update_arena_pos.run_if(in_state(GameState::Gameplay)),
+    );
 
     #[cfg(debug_assertions)]
     {
-        app.add_systems(Update, draw_arena_region_outline);
+        app.add_systems(
+            Update,
+            draw_arena_region_outline.run_if(in_state(GameState::Gameplay)),
+        );
     }
 }
 
 #[derive(AssetCollection, Resource)]
 struct ArenaAssets {
-    #[asset(path = "arena_template.aseprite")]
-    arena_template: Handle<Aseprite>,
-    #[asset(path = "cards/red/red.aseprite")]
-    red: Handle<Aseprite>,
+    #[asset(path = "arena/arena_template.aseprite")]
+    arena: Handle<Aseprite>,
+    #[asset(path = "arena/battle.ogg")]
+    battle_music: Handle<AudioSource>,
 }
 
 fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
@@ -36,28 +43,18 @@ fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
         Name::new("Шаблон арены"),
         AseSpriteSlice {
             name: "arena_template".into(),
-            aseprite: arena_assets.arena_template.clone(),
+            aseprite: arena_assets.arena.clone(),
         },
         StateScoped(GameState::Gameplay),
         DynamicScale(1.),
         Transform::from_translation(Vec3::ZERO.with_z(-0.5)),
     ));
-
     cmd.spawn((
-        Name::new("Амогус"),
-        AseSpriteAnimation {
-            animation: Animation::tag("d"),
-            aseprite: arena_assets.red.clone(),
-        },
+        AudioPlayer::new(arena_assets.battle_music.clone()),
+        PlaybackSettings::LOOP,
         StateScoped(GameState::Gameplay),
-        DynamicScale(1.),
-        ArenaPos(-1., -1.),
     ));
 }
-
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-struct ArenaPos(pub f32, pub f32);
 
 fn update_arena_pos(
     mut arena_pos: Query<(&mut Transform, &ArenaPos)>,

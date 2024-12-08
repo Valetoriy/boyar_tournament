@@ -9,3 +9,6 @@ boyar_tournament = { path = "../boyar_tournament" }
 bevy = { version = "0.15", default-features = false }
 image = { version = "0.25.5", default-features = false }
 winit = { version = "0.30.5", default-features = false }
+
+[lints]
+workspace = true

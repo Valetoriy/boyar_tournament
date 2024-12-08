@@ -47,6 +47,11 @@ log = { version = "0.4.22", features = [
     "max_level_debug",
     "release_max_level_warn",
 ] }
+common = { path = "../common" }
+bevy_quinnet = "0.13.0"
+
+[lints]
+workspace = true
 
 [features]
 dev = [
