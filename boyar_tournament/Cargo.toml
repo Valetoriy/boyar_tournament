@@ -55,7 +55,3 @@ dev = [
     "bevy/file_watcher",
     "bevy/embedded_watcher",
 ]
-
-[lints.clippy]
-too_many_arguments = "allow"
-type_complexity = "allow"

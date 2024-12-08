@@ -2,6 +2,10 @@
 members = ["boyar_tournament", "desktop_client", "mobile_client", "server"]
 resolver = "2"
 
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"
+
 [profile.dev]
 opt-level = 1
 
