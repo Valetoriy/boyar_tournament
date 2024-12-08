@@ -8,7 +8,7 @@ pub const SERVER_HOST: Ipv4Addr = Ipv4Addr::LOCALHOST;
 pub const LOCAL_BIND_IP: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
 pub const SERVER_PORT: u16 = 42069;
 
-#[derive(Debug, Component, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Component, Reflect, Serialize, Deserialize, Clone, Copy)]
 #[reflect(Component)]
 pub struct ArenaPos(pub f32, pub f32);
 

@@ -6,7 +6,12 @@ use bevy_quinnet::{
     },
     shared::ClientId,
 };
-use common::{ServerChannel, ServerMessage, LOCAL_BIND_IP, SERVER_HOST, SERVER_PORT};
+use common::{
+    ArenaPos, ClientMessage, Direction, ServerChannel, ServerMessage, Unit, LOCAL_BIND_IP,
+    SERVER_HOST, SERVER_PORT,
+};
+
+mod units;
 
 fn main() {
     App::new()
@@ -15,9 +20,10 @@ fn main() {
             MinimalPlugins,
             LogPlugin::default(),
             QuinnetServerPlugin::default(),
+            units::plugin,
         ))
         .add_systems(Startup, start_listening)
-        .add_systems(Update, handle_connection_events)
+        .add_systems(Update, (handle_connection_events, handle_client_messages))
         .run();
 }
 
@@ -47,8 +53,6 @@ fn handle_connection_events(
             server.endpoint_mut().disconnect_client(client.id).unwrap();
             continue;
         }
-        info!("Client connected: {}", client.id);
-
         lobby.insert(client.id, lobby_len);
 
         if lobby.len() == 2 {
@@ -56,6 +60,34 @@ fn handle_connection_events(
                 .endpoint_mut()
                 .broadcast_message_on(ServerChannel::OrderedReliable, ServerMessage::StartGame)
                 .unwrap();
+
+            server
+                .endpoint_mut()
+                .broadcast_message_on(
+                    ServerChannel::UnorderedReliable,
+                    ServerMessage::SpawnUnit(
+                        Unit::ArcherTower,
+                        ArenaPos(0., 3.5),
+                        Direction::Down,
+                    ),
+                )
+                .unwrap();
+        }
+    }
+}
+
+fn handle_client_messages(mut server: ResMut<QuinnetServer>) {
+    let endpoint = server.endpoint_mut();
+    for client_id in endpoint.clients() {
+        while let Some((_, message)) =
+            endpoint.try_receive_message_from::<ClientMessage>(client_id)
+        {
+            match message {
+                ClientMessage::PlayCard {
+                    card_number,
+                    placement,
+                } => info!("Received PlayCard №{card_number}@{placement:?}"),
+            }
         }
     }
 }
