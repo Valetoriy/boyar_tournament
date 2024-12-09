@@ -12,7 +12,7 @@ pub const SERVER_PORT: u16 = 42069;
 #[reflect(Component)]
 pub struct ArenaPos(pub f32, pub f32);
 
-#[derive(Debug, Component, Reflect, Serialize, Deserialize)]
+#[derive(Debug, Component, Reflect, Serialize, Deserialize, Clone, Copy)]
 #[reflect(Component)]
 pub enum Unit {
     ArcherTower,

@@ -11,6 +11,8 @@ use common::{
     SERVER_HOST, SERVER_PORT,
 };
 
+use crate::units::Spawn;
+
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(QuinnetServerPlugin::default());
 
@@ -53,17 +55,7 @@ fn handle_connection_events(
                 .broadcast_message_on(ServerChannel::OrderedReliable, ServerMessage::StartGame)
                 .unwrap();
 
-            server
-                .endpoint_mut()
-                .broadcast_message_on(
-                    ServerChannel::UnorderedReliable,
-                    ServerMessage::SpawnUnit(
-                        Unit::ArcherTower,
-                        ArenaPos(0., 3.5),
-                        Direction::Down,
-                    ),
-                )
-                .unwrap();
+            Unit::ArcherTower.spawn(ArenaPos(0., 3.5), &mut server);
         }
     }
 }
