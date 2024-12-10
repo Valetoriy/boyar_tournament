@@ -1,6 +1,6 @@
+use archer_tower::SpawnArcherTower;
 use bevy::prelude::*;
-use bevy_quinnet::server::QuinnetServer;
-use common::{ArenaPos, Direction, ServerChannel, ServerMessage, Unit};
+use common::{ArenaPos, PlayerNumber, Unit};
 
 mod archer_tower;
 
@@ -9,17 +9,13 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub(super) trait Spawn {
-    fn spawn(&self, pos: ArenaPos, server: &mut QuinnetServer);
+    fn spawn(&self, pos: ArenaPos, player_num: PlayerNumber, cmd: &mut Commands);
 }
 
 impl Spawn for Unit {
-    fn spawn(&self, pos: ArenaPos, server: &mut QuinnetServer) {
-        server
-            .endpoint_mut()
-            .broadcast_message_on(
-                ServerChannel::UnorderedReliable,
-                ServerMessage::SpawnUnit(*self, pos, Direction::Down),
-            )
-            .unwrap();
+    fn spawn(&self, pos: ArenaPos, player_num: PlayerNumber, cmd: &mut Commands) {
+        match self {
+            Unit::ArcherTower => cmd.trigger(SpawnArcherTower(pos, player_num)),
+        }
     }
 }

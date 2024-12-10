@@ -7,7 +7,7 @@ use bevy_quinnet::{
     shared::ClientId,
 };
 use common::{
-    ArenaPos, ClientMessage, Direction, ServerChannel, ServerMessage, Unit, LOCAL_BIND_IP,
+    ArenaPos, ClientMessage, PlayerNumber, ServerChannel, ServerMessage, Unit, LOCAL_BIND_IP,
     SERVER_HOST, SERVER_PORT,
 };
 
@@ -34,12 +34,13 @@ fn start_listening(mut server: ResMut<QuinnetServer>) {
 }
 
 #[derive(Resource, Default, Deref, DerefMut)]
-struct Lobby(HashMap<ClientId, u8>); // u8 - индекс игрока (0 или 1)
+pub struct Lobby(HashMap<ClientId, PlayerNumber>);
 
 fn handle_connection_events(
     mut connection_events: EventReader<ConnectionEvent>,
     mut lobby: ResMut<Lobby>,
     mut server: ResMut<QuinnetServer>,
+    mut cmd: Commands,
 ) {
     let lobby_len = lobby.len() as u8;
     for client in connection_events.read() {
@@ -47,15 +48,31 @@ fn handle_connection_events(
             server.endpoint_mut().disconnect_client(client.id).unwrap();
             continue;
         }
-        lobby.insert(client.id, lobby_len);
+        use PlayerNumber::*;
+
+        let player_num = match lobby_len {
+            0 => One,
+            1 => Two,
+            _ => unreachable!(),
+        };
+        lobby.insert(client.id, player_num);
 
         if lobby.len() == 2 {
-            server
-                .endpoint_mut()
-                .broadcast_message_on(ServerChannel::OrderedReliable, ServerMessage::StartGame)
-                .unwrap();
+            // Отправить каждому игроку его PlayerNumber
+            for (client_id, player_num) in lobby.iter() {
+                server
+                    .endpoint_mut()
+                    .send_message_on(
+                        *client_id,
+                        ServerChannel::OrderedReliable,
+                        ServerMessage::StartGame(*player_num),
+                    )
+                    .unwrap();
+            }
 
-            Unit::ArcherTower.spawn(ArenaPos(0., 3.5), &mut server);
+            Unit::ArcherTower.spawn(ArenaPos(0., -3.5), One, &mut cmd);
+            Unit::ArcherTower.spawn(ArenaPos(5.5, 3.5), Two, &mut cmd);
+            Unit::ArcherTower.spawn(ArenaPos(-5.5, 3.5), Two, &mut cmd);
         }
     }
 }

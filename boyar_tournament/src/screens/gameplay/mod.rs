@@ -8,6 +8,7 @@ use super::GameState;
 
 mod arena;
 mod networking;
+mod units;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(AsepriteUltraPlugin);
@@ -16,7 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         LoadingStateConfig::new(GameState::Loading).load_collection::<CardsAssets>(),
     );
 
-    app.add_plugins((arena::plugin, networking::plugin));
+    app.add_plugins((arena::plugin, networking::plugin, units::plugin));
 
     app.add_systems(OnEnter(GameState::Gameplay), spawn_test);
 }

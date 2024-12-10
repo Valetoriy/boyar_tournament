@@ -8,7 +8,7 @@ pub const SERVER_HOST: Ipv4Addr = Ipv4Addr::LOCALHOST;
 pub const LOCAL_BIND_IP: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
 pub const SERVER_PORT: u16 = 42069;
 
-#[derive(Debug, Component, Reflect, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Component, Reflect, Serialize, Deserialize, Clone, Copy, Default)]
 #[reflect(Component)]
 pub struct ArenaPos(pub f32, pub f32);
 
@@ -16,6 +16,21 @@ pub struct ArenaPos(pub f32, pub f32);
 #[reflect(Component)]
 pub enum Unit {
     ArcherTower,
+}
+
+#[derive(Component, Reflect, Serialize, Deserialize)]
+#[reflect(Component)]
+pub struct Health(pub u16, pub u16); // Текущее и максимальное здоровье
+impl Health {
+    // Конкретное значение указывается в сервере, default для спауна на клиенте
+    pub fn new(amount: u16) -> Self {
+        Health(amount, amount)
+    }
+}
+impl Default for Health {
+    fn default() -> Self {
+        Self::new(100)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,10 +49,29 @@ pub enum ClientMessage {
     },
 }
 
+#[derive(
+    Resource,
+    Component,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Hash,
+    Eq,
+    PartialEq,
+)]
+pub enum PlayerNumber {
+    #[default]
+    One, // Игрок "снизу"
+    Two, // Игрок "сверху"
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum ServerMessage {
-    StartGame,
-    SpawnUnit(Unit, ArenaPos, Direction),
+    StartGame(PlayerNumber),
+    SpawnUnit(Unit, ArenaPos, PlayerNumber),
 }
 
 #[repr(u8)]
