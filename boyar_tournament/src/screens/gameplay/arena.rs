@@ -9,6 +9,7 @@ use common::ArenaPos;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<ArenaPos>();
+    app.register_type::<ArenaHeightOffset>();
 
     app.configure_loading_state(
         LoadingStateConfig::new(GameState::Loading).load_collection::<ArenaAssets>(),
@@ -56,17 +57,25 @@ fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
     // ));
 }
 
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct ArenaHeightOffset(pub f32);
+
 fn update_arena_pos(
-    mut arena_pos: Query<(&mut Transform, &ArenaPos)>,
+    mut arena_pos: Query<(&mut Transform, &ArenaPos, Option<&ArenaHeightOffset>)>,
     draw_region: Res<DrawRegion>,
 ) {
-    for (mut transform, arena_pos) in &mut arena_pos {
+    for (mut transform, arena_pos, height_offset) in &mut arena_pos {
         transform.translation.x = arena_pos.0 * draw_region.width / 19.61;
         transform.translation.y =
             arena_pos.1 * draw_region.height / 43.2 + draw_region.height / 13.5;
 
         // Чем ниже сущность на арене тем "выше" она отображается
         transform.translation.z = transform.translation.y / draw_region.height * -1.;
+
+        if let Some(height_offset) = height_offset {
+            transform.translation.y += height_offset.0 * draw_region.height / 43.2;
+        }
     }
 }
 

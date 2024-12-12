@@ -41,7 +41,7 @@ bevy = { version = "0.15.0", default-features = false, features = [
     "x11",
 ] }
 bevy-inspector-egui = "0.28.0"
-bevy_aseprite_ultra = "0.3.0"
+bevy_aseprite_ultra = "0.4.0"
 bevy_asset_loader = "0.22.0"
 log = { version = "0.4.22", features = [
     "max_level_debug",

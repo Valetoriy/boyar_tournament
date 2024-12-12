@@ -21,13 +21,13 @@ impl Spawn for Unit {
 }
 
 trait SpawnTag {
-    fn spawn_tag(self_num: PlayerNumber, player_num: PlayerNumber) -> &'static str;
+    fn spawn_tag(self, player_num: Self) -> &'static str;
 }
 
 impl SpawnTag for PlayerNumber {
-    fn spawn_tag(self_num: PlayerNumber, player_num: PlayerNumber) -> &'static str {
+    fn spawn_tag(self, player_num: PlayerNumber) -> &'static str {
         use PlayerNumber::*;
-        match (self_num, player_num) {
+        match (self, player_num) {
             (One, One) | (Two, Two) => "u",
             _ => "d",
         }

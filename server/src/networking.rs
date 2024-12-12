@@ -70,9 +70,10 @@ fn handle_connection_events(
                     .unwrap();
             }
 
-            Unit::ArcherTower.spawn(ArenaPos(0., -3.5), One, &mut cmd);
-            Unit::ArcherTower.spawn(ArenaPos(5.5, 3.5), Two, &mut cmd);
-            Unit::ArcherTower.spawn(ArenaPos(-5.5, 3.5), Two, &mut cmd);
+            Unit::ArcherTower.spawn(ArenaPos(-5.5, -9.5), One, &mut cmd);
+            Unit::ArcherTower.spawn(ArenaPos(5.5, -9.5), One, &mut cmd);
+            Unit::ArcherTower.spawn(ArenaPos(-5.5, 9.5), Two, &mut cmd);
+            Unit::ArcherTower.spawn(ArenaPos(5.5, 9.5), Two, &mut cmd);
         }
     }
 }

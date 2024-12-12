@@ -41,6 +41,13 @@ pub enum Direction {
     Right,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize)]
+pub enum UnitState {
+    Idle,
+    Moving,
+    Attacking,
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum ClientMessage {
     PlayCard {
