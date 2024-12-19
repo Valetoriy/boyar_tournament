@@ -85,10 +85,9 @@ fn handle_client_messages(mut server: ResMut<QuinnetServer>) {
             endpoint.try_receive_message_from::<ClientMessage>(client_id)
         {
             match message {
-                ClientMessage::PlayCard {
-                    card_number,
-                    placement,
-                } => info!("Received PlayCard №{card_number}@{placement:?}"),
+                ClientMessage::PlayCard { card, placement } => {
+                    info!("Received PlayCard {card:?}@{placement:?}")
+                }
             }
         }
     }

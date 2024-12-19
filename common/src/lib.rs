@@ -12,8 +12,13 @@ pub const SERVER_PORT: u16 = 42069;
 #[reflect(Component)]
 pub struct ArenaPos(pub f32, pub f32);
 
-#[derive(Debug, Component, Reflect, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Component, Serialize, Deserialize, Clone, Copy, Reflect)]
 #[reflect(Component)]
+pub enum Card {
+    Musketeer,
+}
+
+#[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
 pub enum Unit {
     ArcherTower,
 }
@@ -50,10 +55,7 @@ pub enum UnitState {
 
 #[derive(Serialize, Deserialize)]
 pub enum ClientMessage {
-    PlayCard {
-        card_number: u8, // Номер карты в текущей руке
-        placement: ArenaPos,
-    },
+    PlayCard { card: Card, placement: ArenaPos },
 }
 
 #[derive(
@@ -86,9 +88,9 @@ pub enum ClientChannel {
     // Разыгрывание карт, и мб вызов эмоутов
     OrderedReliable,
 }
-impl Into<ChannelId> for ClientChannel {
-    fn into(self) -> ChannelId {
-        self as ChannelId
+impl From<ClientChannel> for ChannelId {
+    fn from(value: ClientChannel) -> Self {
+        value as _
     }
 }
 impl ClientChannel {
@@ -106,9 +108,9 @@ pub enum ServerChannel {
     // Синхронизация юнитов
     Unreliable,
 }
-impl Into<ChannelId> for ServerChannel {
-    fn into(self) -> ChannelId {
-        self as ChannelId
+impl From<ServerChannel> for ChannelId {
+    fn from(value: ServerChannel) -> Self {
+        value as _
     }
 }
 impl ServerChannel {

@@ -49,6 +49,7 @@ log = { version = "0.4.22", features = [
 ] }
 common = { path = "../common" }
 bevy_quinnet = "0.13.0"
+rand = "0.8.5"
 
 [lints]
 workspace = true

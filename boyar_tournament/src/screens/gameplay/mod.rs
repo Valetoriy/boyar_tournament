@@ -7,46 +7,57 @@ use crate::scaling::{DynamicScale, DynamicTransform};
 use super::GameState;
 
 mod arena;
+mod deck;
 mod networking;
 mod units;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(AsepriteUltraPlugin);
 
+    app.add_plugins((
+        arena::plugin,
+        networking::plugin,
+        units::plugin,
+        deck::plugin,
+    ));
+
     app.configure_loading_state(
-        LoadingStateConfig::new(GameState::Loading).load_collection::<CardsAssets>(),
+        LoadingStateConfig::new(GameState::Loading).load_collection::<FontAssets>(),
     );
-
-    app.add_plugins((arena::plugin, networking::plugin, units::plugin));
-
-    app.add_systems(OnEnter(GameState::Gameplay), spawn_test);
 }
 
 #[derive(AssetCollection, Resource)]
-struct CardsAssets {
-    #[asset(path = "cards.aseprite")]
-    cards: Handle<Aseprite>,
+struct FontAssets {
+    #[asset(path = "Keleti-Regular.ttf")]
+    font: Handle<Font>,
 }
 
-fn spawn_test(mut cmd: Commands, cards_assets: ResMut<CardsAssets>) {
-    for (i, card) in [
-        ("red", -2.05),
-        ("blue", -0.22),
-        ("green", 1.62),
-        ("yellow", 3.45),
-    ]
-    .iter()
-    .enumerate()
-    {
-        cmd.spawn((
-            Name::new(format!("Карта {}", i + 1)),
-            AseSpriteSlice {
-                name: card.0.into(),
-                aseprite: cards_assets.cards.clone(),
-            },
-            StateScoped(GameState::Gameplay),
-            DynamicScale(1.8),
-            DynamicTransform(card.1, -6.28),
-        ));
-    }
+fn spawn_text(
+    cmd: &mut Commands,
+    text: &str,
+    font: Handle<Font>,
+    font_size: f32,
+    dynamic_scale: f32,
+    dynamic_transform: (f32, f32),
+    state: GameState,
+) {
+    cmd.spawn((
+        Text2d::new(text),
+        TextFont::from_font(font.clone()).with_font_size(font_size),
+        TextColor(Color::srgb(1., 1., 0.)),
+        StateScoped(state),
+        DynamicScale(dynamic_scale),
+        DynamicTransform(dynamic_transform.0, dynamic_transform.1),
+    ))
+    .insert(Transform::from_xyz(0., 0., 0.2));
+
+    cmd.spawn((
+        Text2d::new(text),
+        TextFont::from_font(font.clone()).with_font_size(font_size),
+        TextColor(Color::BLACK),
+        StateScoped(state),
+        DynamicScale(dynamic_scale),
+        DynamicTransform(dynamic_transform.0 + 0.03, dynamic_transform.1 - 0.03),
+    ))
+    .insert(Transform::from_xyz(0., 0., 0.1));
 }

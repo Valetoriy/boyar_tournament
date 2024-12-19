@@ -100,10 +100,7 @@ fn spawn_archer_tower(
     ));
 }
 
-fn despawn_archer_towers(
-    mut cmd: Commands,
-    towers: Query<(Entity, &AssociatedTower), With<ArcherTowerArcher>>,
-) {
+fn despawn_archer_towers(mut cmd: Commands, towers: Query<(Entity, &AssociatedTower)>) {
     for (archer, tower) in towers.iter() {
         cmd.entity(tower.0).despawn();
         cmd.entity(archer).despawn();

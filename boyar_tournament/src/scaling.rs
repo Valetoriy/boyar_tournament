@@ -68,9 +68,8 @@ fn update_dynamic_scale(
     }
 }
 
-/// Компонент для регулирования размеров Sprite
 /// Расположение сущности в квадратах DrawRegion
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct DynamicTransform(pub f32, pub f32);
 

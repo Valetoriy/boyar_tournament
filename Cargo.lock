@@ -1623,6 +1623,7 @@ dependencies = [
  "bevy_quinnet",
  "common",
  "log",
+ "rand",
 ]
 
 [[package]]
