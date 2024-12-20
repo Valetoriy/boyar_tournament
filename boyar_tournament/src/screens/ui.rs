@@ -32,14 +32,20 @@ fn update_ui_hitboxes(
     window: Query<&Window, With<PrimaryWindow>>,
     draw_region: Res<DrawRegion>,
     mouse: Res<ButtonInput<MouseButton>>,
+    touch: Res<Touches>,
 ) {
     let window = window.single();
-    let Some(mut mouse_pos) = window.cursor_position() else {
-        return;
+    let mut press_pos = if let Some(mouse_pos) = window.cursor_position() {
+        mouse_pos
+    } else {
+        let Some(touch_pos) = touch.first_pressed_position() else {
+            return;
+        };
+        touch_pos
     };
-    mouse_pos.x -= window.width() / 2.;
-    mouse_pos.y -= window.height() / 2.;
-    mouse_pos.y *= -1.;
+    press_pos.x -= window.width() / 2.;
+    press_pos.y -= window.height() / 2.;
+    press_pos.y *= -1.;
 
     let cell_width = draw_region.width / 9.;
     let cell_height = draw_region.height / 16.;
@@ -49,14 +55,14 @@ fn update_ui_hitboxes(
         let hitbox_left = (transform.0 - hitbox.0 / 2.) * cell_width;
         let hitbox_right = (transform.0 + hitbox.0 / 2.) * cell_width;
 
-        if hitbox_bottom <= mouse_pos.y
-            && mouse_pos.y <= hitbox_top
-            && hitbox_left <= mouse_pos.x
-            && mouse_pos.x <= hitbox_right
+        if hitbox_bottom <= press_pos.y
+            && press_pos.y <= hitbox_top
+            && hitbox_left <= press_pos.x
+            && press_pos.x <= hitbox_right
         {
             *interaction = UiInteraction::Hovered;
 
-            if mouse.just_pressed(MouseButton::Left) {
+            if mouse.just_pressed(MouseButton::Left) || touch.any_just_pressed() {
                 *interaction = UiInteraction::Pressed;
             }
             continue;

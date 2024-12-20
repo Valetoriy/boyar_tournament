@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_aseprite_ultra::prelude::*;
 use bevy_asset_loader::prelude::*;
 use common::Card;
+use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     scaling::{DynamicScale, DynamicTransform},
@@ -25,9 +26,11 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     use Card::*;
-    app.insert_resource(Deck([
+    let mut cards = [
         Musketeer, Musketeer, Musketeer, Musketeer, Musketeer, Musketeer, Musketeer, Musketeer,
-    ]));
+    ];
+    cards.shuffle(&mut thread_rng());
+    app.insert_resource(Deck(cards));
 
     app.add_systems(OnEnter(GameState::Gameplay), spawn_card_hand);
 }
@@ -36,6 +39,8 @@ pub(super) fn plugin(app: &mut App) {
 struct CardsAssets {
     #[asset(path = "cards.aseprite")]
     cards: Handle<Aseprite>,
+    #[asset(path = "screens/gameplay/card_select.ogg")]
+    card_select: Handle<AudioSource>,
 }
 
 #[derive(Resource, Reflect)]
@@ -98,10 +103,16 @@ fn on_card_select(
     trigger: Trigger<OnPress>,
     mut selected_card: ResMut<SelectedCard>,
     mut query: Query<(&DeckIndex, &mut DynamicScale)>,
+    mut cmd: Commands,
+    cards_assets: ResMut<CardsAssets>,
 ) {
-    let entity = trigger.entity();
+    cmd.spawn((
+        AudioPlayer::new(cards_assets.card_select.clone()),
+        PlaybackSettings::DESPAWN,
+    ));
 
-    let (&pressed_index, _) = query.get_mut(entity).unwrap();
+    let entity = trigger.entity();
+    let (&pressed_index, _) = query.get(entity).unwrap();
 
     if let Some(selected_index) = selected_card.0 {
         for (index, mut scale) in &mut query {
