@@ -83,7 +83,7 @@ fn update_arena_pos(
 
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
-struct MouseArenaPos(Option<ArenaPos>);
+pub struct MouseArenaPos(pub Option<ArenaPos>);
 
 fn update_mouse_arena_pos(
     mut mouse_arena_pos: ResMut<MouseArenaPos>,

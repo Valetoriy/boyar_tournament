@@ -15,7 +15,14 @@ pub struct ArenaPos(pub f32, pub f32);
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy, Reflect)]
 #[reflect(Component)]
 pub enum Card {
+    Rus,
     Musketeer,
+    ThreeMusketeers,
+    Priest,
+    Bats,
+    BatHorde,
+    Giant,
+    Bomber,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
