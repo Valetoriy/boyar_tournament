@@ -98,7 +98,7 @@ fn spawn_card_hand(
         font.font.clone(),
         35.,
         1.,
-        (-3.63, -5.05),
+        (-3.8, -5.05),
         GameState::Gameplay,
     );
     cmd.spawn((
@@ -110,7 +110,7 @@ fn spawn_card_hand(
         DeckIndex(4),
         StateScoped(GameState::Gameplay),
         DynamicScale(0.8),
-        DynamicTransform(-3.63, -5.7),
+        DynamicTransform(-3.8, -5.7),
     ));
 }
 

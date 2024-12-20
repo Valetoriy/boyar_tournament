@@ -35,7 +35,7 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(AssetCollection, Resource)]
 struct ArenaAssets {
-    #[asset(path = "arena/arena_template.aseprite")]
+    #[asset(path = "arena/winter_arena.aseprite")]
     arena: Handle<Aseprite>,
     // #[asset(path = "arena/battle.ogg")]
     // battle_music: Handle<AudioSource>,
@@ -45,7 +45,7 @@ fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
     cmd.spawn((
         Name::new("Шаблон арены"),
         AseSpriteSlice {
-            name: "arena_template".into(),
+            name: "winter_arena".into(),
             aseprite: arena_assets.arena.clone(),
         },
         StateScoped(GameState::Gameplay),
