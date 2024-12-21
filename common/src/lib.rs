@@ -1,6 +1,9 @@
-use std::net::Ipv4Addr;
+use std::{
+    net::Ipv4Addr,
+    ops::{Sub, SubAssign},
+};
 
-use bevy::prelude::*;
+use bevy::{math::vec2, prelude::*};
 use bevy_quinnet::shared::channels::{ChannelId, ChannelType, ChannelsConfiguration};
 use serde::{Deserialize, Serialize};
 
@@ -8,9 +11,42 @@ pub const SERVER_HOST: Ipv4Addr = Ipv4Addr::LOCALHOST;
 pub const LOCAL_BIND_IP: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
 pub const SERVER_PORT: u16 = 42069;
 
-#[derive(Debug, Component, Reflect, Serialize, Deserialize, Clone, Copy, Default)]
+#[derive(
+    Debug,
+    Component,
+    Reflect,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    PartialOrd,
+)]
 #[reflect(Component)]
 pub struct ArenaPos(pub f32, pub f32);
+impl Sub for ArenaPos {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        ArenaPos(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+impl SubAssign for ArenaPos {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
+    }
+}
+impl ArenaPos {
+    pub fn normalize(&self) -> Self {
+        let v = vec2(self.0, self.1).normalize();
+        ArenaPos(v.x, v.y)
+    }
+    pub fn mul(&self, n: f32) -> Self {
+        ArenaPos(self.0 * n, self.1 * n)
+    }
+}
 
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy, Reflect)]
 #[reflect(Component)]
@@ -28,6 +64,12 @@ pub enum Card {
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
 pub enum Unit {
     ArcherTower,
+    KingTower,
+}
+
+#[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
+pub enum Projectile {
+    Bullet,
 }
 
 #[derive(Component, Reflect, Serialize, Deserialize)]
@@ -45,7 +87,8 @@ impl Default for Health {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub enum Direction {
     Up,
     Down,
@@ -53,8 +96,10 @@ pub enum Direction {
     Right,
 }
 
-#[derive(Component, Debug, Serialize, Deserialize)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone, Copy, Reflect, Default)]
+#[reflect(Component)]
 pub enum UnitState {
+    #[default]
     Idle,
     Moving,
     Attacking,
@@ -87,7 +132,10 @@ pub enum PlayerNumber {
 #[derive(Serialize, Deserialize)]
 pub enum ServerMessage {
     StartGame(PlayerNumber),
-    SpawnUnit(Unit, ArenaPos, PlayerNumber),
+    SpawnUnit(Entity, Unit, ArenaPos, PlayerNumber),
+    // 2 Entity - атакующий и цель
+    SpawnProjectile(Entity, Projectile, Entity, Entity, ArenaPos),
+    Despawn(Entity),
 }
 
 #[repr(u8)]

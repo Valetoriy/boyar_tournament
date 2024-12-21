@@ -5,10 +5,13 @@ use common::{ArenaPos, Health, PlayerNumber, UnitState};
 
 use crate::{
     scaling::DynamicScale,
-    screens::{gameplay::arena::ArenaHeightOffset, GameState},
+    screens::{
+        gameplay::{arena::ArenaHeightOffset, networking::NetworkMapping},
+        GameState,
+    },
 };
 
-use super::{SpawnPosition, SpawnTag};
+use super::{IntoTag, SpawnDirection, SpawnPosition};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_archer_tower);
@@ -21,11 +24,10 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Event)]
-pub struct SpawnArcherTower(pub ArenaPos, pub PlayerNumber);
+pub struct SpawnArcherTower(pub Entity, pub ArenaPos, pub PlayerNumber);
 
 #[derive(Component)]
 #[require(
-    Name(|| Name::new("Башня лучника")),
     DynamicScale(|| DynamicScale(0.55)),
     ArenaHeightOffset(|| ArenaHeightOffset(1.)),
 )]
@@ -63,10 +65,12 @@ fn spawn_archer_tower(
     mut cmd: Commands,
     self_num: Res<PlayerNumber>,
     assets: ResMut<ArcherTowerAssets>,
+    mut network_mapping: ResMut<NetworkMapping>,
 ) {
-    let SpawnArcherTower(pos, player_num) = trigger.event();
+    let SpawnArcherTower(entity, pos, player_num) = trigger.event();
 
     let mut pos = self_num.spawn_pos(*pos);
+    let direction = self_num.spawn_direction(*player_num);
 
     let (tower_sprite, archer_sprite) = if pos.1 < 0. {
         (assets.ally_tower.clone(), assets.ally_archer.clone())
@@ -85,19 +89,21 @@ fn spawn_archer_tower(
         ))
         .id();
 
-    let tag = self_num.spawn_tag(*player_num);
-
     pos.1 -= 0.01;
-    cmd.spawn((
-        ArcherTowerArcher,
-        pos,
-        UnitState::Idle,
-        AseSpriteAnimation {
-            animation: Animation::tag(tag),
-            aseprite: archer_sprite,
-        },
-        AssociatedTower(tower),
-    ));
+    let archer = cmd
+        .spawn((
+            ArcherTowerArcher,
+            pos,
+            UnitState::Idle,
+            direction,
+            AseSpriteAnimation {
+                animation: Animation::tag(direction.tag()),
+                aseprite: archer_sprite,
+            },
+            AssociatedTower(tower),
+        ))
+        .id();
+    network_mapping.insert(*entity, archer);
 }
 
 fn despawn_archer_towers(mut cmd: Commands, towers: Query<(Entity, &AssociatedTower)>) {

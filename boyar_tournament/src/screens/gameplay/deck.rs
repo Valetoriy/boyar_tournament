@@ -86,7 +86,7 @@ fn spawn_card_hand(
             DeckIndex(i as _),
             StateScoped(GameState::Gameplay),
             DynamicScale(1.8),
-            DynamicTransform(*pos, -6.28),
+            DynamicTransform(*pos, -6.279),
             UiHitbox(1.8, 2.3),
         ))
         .observe(on_card_select);

@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_quinnet::client::{
     certificate::CertificateVerificationMode, connection::ClientEndpointConfiguration,
     QuinnetClient, QuinnetClientPlugin,
@@ -15,6 +15,8 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(QuinnetClientPlugin::default());
 
     app.init_resource::<PlayerNumber>();
+    app.init_resource::<NetworkMapping>();
+    app.register_type::<NetworkMapping>();
 
     app.add_systems(OnEnter(GameState::Gameplay), start_connection);
     app.add_systems(
@@ -44,9 +46,22 @@ fn handle_server_messages(
     {
         match message {
             ServerMessage::StartGame(n) => *player_num = n,
-            ServerMessage::SpawnUnit(unit, pos, player_num) => {
-                unit.spawn(pos, player_num, &mut cmd);
+            ServerMessage::SpawnUnit(entity, unit, pos, player_num) => {
+                unit.spawn(entity, pos, player_num, &mut cmd);
             }
+            ServerMessage::SpawnProjectile(
+                entity,
+                projectile,
+                entity1,
+                entity2,
+                arena_pos,
+            ) => todo!(),
+            ServerMessage::Despawn(entity) => todo!(),
         }
     }
 }
+
+#[derive(Resource, Reflect, Default, Deref, DerefMut)]
+#[reflect(Resource)]
+// Сопоставление Entity сервера и клиента
+pub struct NetworkMapping(HashMap<Entity, Entity>);

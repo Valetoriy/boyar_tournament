@@ -11,7 +11,7 @@ use common::{
     SERVER_HOST, SERVER_PORT,
 };
 
-use crate::units::Spawn;
+use crate::units::SpawnUnit;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(QuinnetServerPlugin::default());
@@ -71,8 +71,11 @@ fn handle_connection_events(
             }
 
             Unit::ArcherTower.spawn(ArenaPos(-5.5, -9.5), One, &mut cmd);
+            Unit::KingTower.spawn(ArenaPos(0., -13.), One, &mut cmd);
             Unit::ArcherTower.spawn(ArenaPos(5.5, -9.5), One, &mut cmd);
+
             Unit::ArcherTower.spawn(ArenaPos(-5.5, 9.5), Two, &mut cmd);
+            Unit::KingTower.spawn(ArenaPos(0., 13.), Two, &mut cmd);
             Unit::ArcherTower.spawn(ArenaPos(5.5, 9.5), Two, &mut cmd);
         }
     }
