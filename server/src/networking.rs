@@ -15,7 +15,7 @@ use common::{
 
 use crate::{
     ai::{Attack, Movement, StunnedTimer},
-    units::SpawnUnit,
+    units::{Giant, SpawnUnit},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -125,7 +125,8 @@ fn handle_client_messages(
                         Unit::Bat.spawn(ArenaPos(x - 0.5, y + 0.5), *player_num, &mut cmd);
                     }
                     Card::Priest => Unit::Priest.spawn(placement, *player_num, &mut cmd),
-                    _ => (),
+                    Card::Bomber => Unit::Bomber.spawn(placement, *player_num, &mut cmd),
+                    Card::Giant => Unit::Giant.spawn(placement, *player_num, &mut cmd),
                 },
             }
         }
@@ -170,6 +171,16 @@ fn sync_entities(
         &Health,
         Option<&StunnedTimer>,
     )>,
+    giants: Query<(
+        Entity,
+        &ArenaPos,
+        &UnitState,
+        &Giant,
+        &Movement,
+        &PlayerNumber,
+        &Health,
+        Option<&StunnedTimer>,
+    )>,
     projectiles: Query<(Entity, &ArenaPos), Without<PlayerNumber>>,
     positions: Query<&ArenaPos>,
     mut server: ResMut<QuinnetServer>,
@@ -191,6 +202,34 @@ fn sync_entities(
                 }
             }
             UnitState::Attacking => match attack.target {
+                Some(a) => {
+                    let Ok(target_pos) = positions.get(a) else {
+                        continue;
+                    };
+                    calc_direction(&pos.direction(target_pos))
+                }
+                None => player_num.default_direction(),
+            },
+        };
+        let mut state = *state;
+        if let Some(_) = stun {
+            state = UnitState::Idle
+        }
+        u.push((entity, *pos, direction, state, *health));
+    }
+    for (entity, pos, state, giant, movement, player_num, health, stun) in &giants {
+        let direction = match state {
+            UnitState::Idle => player_num.default_direction(),
+            UnitState::Moving => match movement.target {
+                Some(m) => {
+                    let Ok(target_pos) = positions.get(m) else {
+                        continue;
+                    };
+                    calc_direction(&pos.direction(target_pos))
+                }
+                None => player_num.default_direction(),
+            },
+            UnitState::Attacking => match giant.target {
                 Some(a) => {
                     let Ok(target_pos) = positions.get(a) else {
                         continue;

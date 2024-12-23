@@ -72,8 +72,8 @@ pub enum Card {
     Priest,
     Bats,
     BatHorde,
-    SmallDragon,
-    Skeletons,
+    Bomber,
+    Giant,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
@@ -84,12 +84,15 @@ pub enum Unit {
     Musketeer,
     Bat,
     Priest,
+    Bomber,
+    Giant,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
 pub enum Projectile {
     Bullet,
     Fireball,
+    Bomb,
 }
 
 #[derive(Component, Reflect, Serialize, Deserialize, Clone, Copy)]

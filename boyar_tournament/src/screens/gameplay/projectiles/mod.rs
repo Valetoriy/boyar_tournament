@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bomb::SpawnBomb;
 use bullet::SpawnBullet;
 use common::{ArenaPos, Projectile};
 use fireball::SpawnFireball;
@@ -7,11 +8,12 @@ use crate::screens::GameState;
 
 use super::arena::ArenaHeightOffset;
 
+mod bomb;
 mod bullet;
 mod fireball;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((bullet::plugin, fireball::plugin));
+    app.add_plugins((bullet::plugin, fireball::plugin, bomb::plugin));
 
     app.add_systems(
         Update,
@@ -44,6 +46,7 @@ impl SpawnProjectile for Projectile {
             Projectile::Fireball => {
                 cmd.trigger(SpawnFireball(entity, attacker, receiver, pos))
             }
+            Projectile::Bomb => cmd.trigger(SpawnBomb(entity, attacker, receiver, pos)),
         }
     }
 }

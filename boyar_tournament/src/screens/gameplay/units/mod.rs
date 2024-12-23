@@ -2,20 +2,24 @@ use archer_tower::SpawnArcherTower;
 use bat::SpawnBat;
 use bevy::prelude::*;
 use bevy_aseprite_ultra::prelude::{AnimationState, AseSpriteAnimation, Aseprite};
+use bomber::SpawnBomber;
 use common::{ArenaPos, Direction, Health, PlayerNumber, Unit, UnitState};
 use king_tower::SpawnKingTower;
 use musketeer::SpawnMusketeer;
 use priest::SpawnPriest;
 use rus::SpawnRus;
+use giant::SpawnGiant;
 
 use crate::screens::GameState;
 
 mod archer_tower;
 mod bat;
+mod bomber;
 mod king_tower;
 mod musketeer;
 mod priest;
 mod rus;
+mod giant;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Direction>();
@@ -34,6 +38,8 @@ pub(super) fn plugin(app: &mut App) {
         musketeer::plugin,
         bat::plugin,
         priest::plugin,
+        bomber::plugin,
+        giant::plugin,
     ));
 }
 
@@ -130,6 +136,8 @@ impl SpawnUnit for Unit {
             Unit::Musketeer => cmd.trigger(SpawnMusketeer(entity, pos, player_num)),
             Unit::Bat => cmd.trigger(SpawnBat(entity, pos, player_num)),
             Unit::Priest => cmd.trigger(SpawnPriest(entity, pos, player_num)),
+            Unit::Bomber => cmd.trigger(SpawnBomber(entity, pos, player_num)),
+            Unit::Giant => cmd.trigger(SpawnGiant(entity, pos, player_num)),
         }
     }
 }

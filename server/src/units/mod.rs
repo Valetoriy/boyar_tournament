@@ -1,14 +1,19 @@
 use archer_tower::SpawnArcherTower;
 use bat::SpawnBat;
 use bevy::prelude::*;
+use bomber::SpawnBomber;
 use common::{ArenaPos, PlayerNumber, Unit};
+use giant::SpawnGiant;
 use king_tower::SpawnKingTower;
 use musketeer::SpawnMusketeer;
 use priest::SpawnPriest;
 use rus::SpawnRus;
+pub use giant::Giant;
 
 mod archer_tower;
 mod bat;
+mod bomber;
+mod giant;
 mod king_tower;
 mod musketeer;
 mod priest;
@@ -22,6 +27,8 @@ pub(super) fn plugin(app: &mut App) {
         musketeer::plugin,
         bat::plugin,
         priest::plugin,
+        bomber::plugin,
+        giant::plugin,
     ));
 }
 
@@ -47,6 +54,8 @@ impl SpawnUnit for Unit {
             Unit::Musketeer => cmd.trigger(SpawnMusketeer(pos, player_num)),
             Unit::Bat => cmd.trigger(SpawnBat(pos, player_num)),
             Unit::Priest => cmd.trigger(SpawnPriest(pos, player_num)),
+            Unit::Bomber => cmd.trigger(SpawnBomber(pos, player_num)),
+            Unit::Giant => cmd.trigger(SpawnGiant(pos, player_num)),
         }
     }
 }

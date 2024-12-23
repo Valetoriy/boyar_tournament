@@ -44,7 +44,7 @@ fn spawn_test(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
         DynamicScale(1.),
         ArenaHeightOffset(0.),
         AseSpriteAnimation {
-            animation: Animation::tag("u"),
+            animation: Animation::tag("d"),
             aseprite: arena_assets.test.clone(),
         },
     ));
@@ -56,7 +56,7 @@ struct ArenaAssets {
     arena: Handle<Aseprite>,
     // #[asset(path = "arena/battle.ogg")]
     // battle_music: Handle<AudioSource>,
-    #[asset(path = "units/priest/priest.aseprite")]
+    #[asset(path = "units/giant/giant.aseprite")]
     test: Handle<Aseprite>,
 }
 

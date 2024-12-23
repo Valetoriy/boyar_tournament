@@ -1,13 +1,15 @@
 use bevy::prelude::*;
+use bomb::SpawnBomb;
 use bullet::SpawnBullet;
 use common::{ArenaPos, Projectile};
 use fireball::SpawnFireball;
 
+mod bomb;
 mod bullet;
 mod fireball;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((bullet::plugin, fireball::plugin));
+    app.add_plugins((bullet::plugin, fireball::plugin, bomb::plugin));
 }
 
 #[derive(Component)]
@@ -22,6 +24,7 @@ impl SpawnProjectile for Projectile {
         match self {
             Projectile::Bullet => cmd.trigger(SpawnBullet(attacker, receiver, pos)),
             Projectile::Fireball => cmd.trigger(SpawnFireball(attacker, receiver, pos)),
+            Projectile::Bomb => cmd.trigger(SpawnBomb(attacker, receiver, pos)),
         }
     }
 }

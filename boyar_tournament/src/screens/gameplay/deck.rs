@@ -34,8 +34,8 @@ pub(super) fn plugin(app: &mut App) {
         Priest,
         Bats,
         BatHorde,
-        SmallDragon,
-        Skeletons,
+        Bomber,
+        Giant,
     ];
     cards.shuffle(&mut thread_rng());
     app.insert_resource(Deck(cards));
@@ -126,8 +126,8 @@ impl IntoTag for Card {
             Card::Priest => "priest",
             Card::Bats => "bats",
             Card::BatHorde => "bat_horde",
-            Card::SmallDragon => "small_dragon",
-            Card::Skeletons => "skeletons",
+            Card::Bomber => "bomber",
+            Card::Giant => "giant",
         };
         s.into()
     }
