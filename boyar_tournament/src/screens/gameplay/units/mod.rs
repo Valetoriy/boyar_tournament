@@ -1,24 +1,40 @@
 use archer_tower::SpawnArcherTower;
+use bat::SpawnBat;
 use bevy::prelude::*;
 use bevy_aseprite_ultra::prelude::{AnimationState, AseSpriteAnimation, Aseprite};
-use common::{ArenaPos, Direction, PlayerNumber, Unit, UnitState};
+use common::{ArenaPos, Direction, Health, PlayerNumber, Unit, UnitState};
 use king_tower::SpawnKingTower;
+use musketeer::SpawnMusketeer;
+use priest::SpawnPriest;
+use rus::SpawnRus;
 
 use crate::screens::GameState;
 
 mod archer_tower;
+mod bat;
 mod king_tower;
+mod musketeer;
+mod priest;
+mod rus;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Direction>();
     app.register_type::<UnitState>();
+    app.register_type::<Health>();
 
     app.add_systems(
         PreUpdate,
         manage_animation.run_if(in_state(GameState::Gameplay)),
     );
 
-    app.add_plugins((archer_tower::plugin, king_tower::plugin));
+    app.add_plugins((
+        archer_tower::plugin,
+        king_tower::plugin,
+        rus::plugin,
+        musketeer::plugin,
+        bat::plugin,
+        priest::plugin,
+    ));
 }
 
 fn manage_animation(
@@ -85,7 +101,11 @@ fn manage_animation(
     }
 }
 
-pub(super) trait Spawn {
+/// Требуется для привязки юнита к башне
+#[derive(Component)]
+pub struct AssociatedTower(pub Entity);
+
+pub(super) trait SpawnUnit {
     fn spawn(
         &self,
         entity: Entity,
@@ -95,7 +115,7 @@ pub(super) trait Spawn {
     );
 }
 
-impl Spawn for Unit {
+impl SpawnUnit for Unit {
     fn spawn(
         &self,
         entity: Entity,
@@ -106,6 +126,10 @@ impl Spawn for Unit {
         match self {
             Unit::ArcherTower => cmd.trigger(SpawnArcherTower(entity, pos, player_num)),
             Unit::KingTower => cmd.trigger(SpawnKingTower(entity, pos, player_num)),
+            Unit::Rus => cmd.trigger(SpawnRus(entity, pos, player_num)),
+            Unit::Musketeer => cmd.trigger(SpawnMusketeer(entity, pos, player_num)),
+            Unit::Bat => cmd.trigger(SpawnBat(entity, pos, player_num)),
+            Unit::Priest => cmd.trigger(SpawnPriest(entity, pos, player_num)),
         }
     }
 }
@@ -113,7 +137,6 @@ impl Spawn for Unit {
 trait SpawnDirection {
     fn spawn_direction(self, player_num: Self) -> Direction;
 }
-
 impl SpawnDirection for PlayerNumber {
     fn spawn_direction(self, player_num: PlayerNumber) -> Direction {
         use PlayerNumber::*;
@@ -143,19 +166,6 @@ impl IntoTag for UnitState {
             UnitState::Idle => "",
             UnitState::Moving => "",
             UnitState::Attacking => "a",
-        }
-    }
-}
-
-trait SpawnPosition {
-    fn spawn_pos(&self, pos: ArenaPos) -> ArenaPos;
-}
-
-impl SpawnPosition for PlayerNumber {
-    fn spawn_pos(&self, pos: ArenaPos) -> ArenaPos {
-        match self {
-            PlayerNumber::One => pos,
-            PlayerNumber::Two => ArenaPos(-pos.0, -pos.1),
         }
     }
 }

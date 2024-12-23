@@ -9,6 +9,7 @@ use super::GameState;
 mod arena;
 mod deck;
 mod networking;
+mod projectiles;
 mod units;
 
 pub(super) fn plugin(app: &mut App) {
@@ -19,6 +20,7 @@ pub(super) fn plugin(app: &mut App) {
         networking::plugin,
         units::plugin,
         deck::plugin,
+        projectiles::plugin,
     ));
 
     app.configure_loading_state(

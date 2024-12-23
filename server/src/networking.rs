@@ -1,3 +1,5 @@
+use core::f32;
+
 use bevy::{prelude::*, utils::HashMap};
 use bevy_quinnet::{
     server::{
@@ -7,11 +9,14 @@ use bevy_quinnet::{
     shared::ClientId,
 };
 use common::{
-    ArenaPos, ClientMessage, PlayerNumber, ServerChannel, ServerMessage, Unit, LOCAL_BIND_IP,
-    SERVER_HOST, SERVER_PORT,
+    ArenaPos, Card, ClientMessage, Direction, Health, PlayerNumber, ServerChannel,
+    ServerMessage, Unit, UnitState, LOCAL_BIND_IP, SERVER_HOST, SERVER_PORT,
 };
 
-use crate::units::SpawnUnit;
+use crate::{
+    ai::{Attack, Movement, StunnedTimer},
+    units::SpawnUnit,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(QuinnetServerPlugin::default());
@@ -19,6 +24,8 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Lobby>();
     app.add_systems(Startup, start_listening);
     app.add_systems(Update, (handle_connection_events, handle_client_messages));
+
+    app.add_systems(FixedPostUpdate, sync_entities);
 }
 
 fn start_listening(mut server: ResMut<QuinnetServer>) {
@@ -81,17 +88,138 @@ fn handle_connection_events(
     }
 }
 
-fn handle_client_messages(mut server: ResMut<QuinnetServer>) {
+fn handle_client_messages(
+    mut server: ResMut<QuinnetServer>,
+    lobby: Res<Lobby>,
+    mut cmd: Commands,
+) {
     let endpoint = server.endpoint_mut();
     for client_id in endpoint.clients() {
         while let Some((_, message)) =
             endpoint.try_receive_message_from::<ClientMessage>(client_id)
         {
+            let player_num = lobby.get(&client_id).unwrap();
             match message {
-                ClientMessage::PlayCard { card, placement } => {
-                    info!("Received PlayCard {card:?}@{placement:?}")
-                }
+                ClientMessage::PlayCard { card, placement } => match card {
+                    Card::Rus => Unit::Rus.spawn(placement, *player_num, &mut cmd),
+                    Card::Musketeer => Unit::Musketeer.spawn(placement, *player_num, &mut cmd),
+                    Card::ThreeMusketeers => {
+                        let ArenaPos(x, y) = placement;
+                        Unit::Musketeer.spawn(ArenaPos(x, y + 0.8), *player_num, &mut cmd);
+                        Unit::Musketeer.spawn(ArenaPos(x + 0.8, y), *player_num, &mut cmd);
+                        Unit::Musketeer.spawn(ArenaPos(x - 0.8, y), *player_num, &mut cmd);
+                    }
+                    Card::Bats => {
+                        let ArenaPos(x, y) = placement;
+                        Unit::Bat.spawn(ArenaPos(x, y + 0.8), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x + 0.8, y), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x - 0.8, y), *player_num, &mut cmd);
+                    }
+                    Card::BatHorde => {
+                        let ArenaPos(x, y) = placement;
+                        Unit::Bat.spawn(ArenaPos(x + 0.5, y + 0.5), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x + 0.8, y), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x + 0.5, y - 0.5), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x - 0.5, y - 0.5), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x - 0.8, y), *player_num, &mut cmd);
+                        Unit::Bat.spawn(ArenaPos(x - 0.5, y + 0.5), *player_num, &mut cmd);
+                    }
+                    Card::Priest => Unit::Priest.spawn(placement, *player_num, &mut cmd),
+                    _ => (),
+                },
             }
         }
     }
+}
+
+trait DefaultDirection {
+    fn default_direction(&self) -> Direction;
+}
+impl DefaultDirection for PlayerNumber {
+    fn default_direction(&self) -> Direction {
+        match self {
+            PlayerNumber::One => Direction::Up,
+            PlayerNumber::Two => Direction::Down,
+        }
+    }
+}
+
+fn calc_direction(direction: &ArenaPos) -> Direction {
+    let mut angle = direction.0.acos() * 180. / f32::consts::PI;
+    if direction.1 < 0. {
+        angle = -angle + 360.;
+    }
+
+    match angle {
+        0.0..20. | 340.0..360. => Direction::Right,
+        20.0..160. => Direction::Up,
+        160.0..200. => Direction::Left,
+        200.0..340. => Direction::Down,
+        _ => Direction::Right,
+    }
+}
+
+fn sync_entities(
+    units: Query<(
+        Entity,
+        &ArenaPos,
+        &UnitState,
+        &Attack,
+        Option<&Movement>,
+        &PlayerNumber,
+        &Health,
+        Option<&StunnedTimer>,
+    )>,
+    projectiles: Query<(Entity, &ArenaPos), Without<PlayerNumber>>,
+    positions: Query<&ArenaPos>,
+    mut server: ResMut<QuinnetServer>,
+) {
+    let mut u = Vec::new();
+    for (entity, pos, state, attack, movement, player_num, health, stun) in &units {
+        let direction = match state {
+            UnitState::Idle => player_num.default_direction(),
+            UnitState::Moving => {
+                let movement = movement.unwrap();
+                match movement.target {
+                    Some(m) => {
+                        let Ok(target_pos) = positions.get(m) else {
+                            continue;
+                        };
+                        calc_direction(&pos.direction(target_pos))
+                    }
+                    None => player_num.default_direction(),
+                }
+            }
+            UnitState::Attacking => match attack.target {
+                Some(a) => {
+                    let Ok(target_pos) = positions.get(a) else {
+                        continue;
+                    };
+                    calc_direction(&pos.direction(target_pos))
+                }
+                None => player_num.default_direction(),
+            },
+        };
+        let mut state = *state;
+        if let Some(_) = stun {
+            state = UnitState::Idle
+        }
+        u.push((entity, *pos, direction, state, *health));
+    }
+
+    let mut p = Vec::new();
+    for (entity, position) in &projectiles {
+        p.push((entity, *position));
+    }
+
+    server
+        .endpoint_mut()
+        .broadcast_message_on(
+            ServerChannel::Unreliable,
+            ServerMessage::SyncEntities {
+                units: u,
+                projectiles: p,
+            },
+        )
+        .unwrap();
 }

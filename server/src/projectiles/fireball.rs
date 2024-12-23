@@ -7,35 +7,35 @@ use crate::{ai::Movement, units::Hitbox};
 use super::ProjectileRadius;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(spawn_bullet);
+    app.add_observer(spawn_fireball);
 
-    app.add_systems(FixedUpdate, update_bullets);
+    app.add_systems(FixedUpdate, update_fireballs);
 }
 
 #[derive(Event)]
-pub struct SpawnBullet(pub Entity, pub Entity, pub ArenaPos);
+pub struct SpawnFireball(pub Entity, pub Entity, pub ArenaPos);
 
 #[derive(Component)]
 #[require(
-    Projectile(|| Projectile::Bullet),
-    ProjectileRadius(|| ProjectileRadius(0.2)),
+    Projectile(|| Projectile::Fireball),
+    ProjectileRadius(|| ProjectileRadius(1.)),
 )]
-struct Bullet(Entity);
+struct Fireball(Entity);
 
-fn spawn_bullet(
-    trigger: Trigger<SpawnBullet>,
+fn spawn_fireball(
+    trigger: Trigger<SpawnFireball>,
     mut server: ResMut<QuinnetServer>,
     mut cmd: Commands,
 ) {
-    let &SpawnBullet(attacker, receiver, pos) = trigger.event();
+    let &SpawnFireball(attacker, receiver, pos) = trigger.event();
 
     let entity = cmd
         .spawn((
-            Bullet(receiver),
+            Fireball(receiver),
             pos,
             Movement {
                 target: Some(receiver),
-                speed: 40.,
+                speed: 10.,
             },
         ))
         .id();
@@ -46,7 +46,7 @@ fn spawn_bullet(
             ServerChannel::OrderedReliable,
             ServerMessage::SpawnProjectile {
                 server_entity: entity,
-                projectile: Projectile::Bullet,
+                projectile: Projectile::Fireball,
                 attacker,
                 receiver,
                 pos,
@@ -55,17 +55,17 @@ fn spawn_bullet(
         .unwrap();
 }
 
-fn update_bullets(
-    mut bullets: Query<
-        (Entity, &Bullet, &ProjectileRadius, &mut ArenaPos),
+fn update_fireballs(
+    mut fireballs: Query<
+        (Entity, &Fireball, &ProjectileRadius, &mut ArenaPos),
         Without<PlayerNumber>,
     >,
     mut units: Query<(&ArenaPos, &mut Health, &Hitbox), With<PlayerNumber>>,
     mut cmd: Commands,
     mut server: ResMut<QuinnetServer>,
 ) {
-    for (entity, bullet, radius, pos) in &mut bullets {
-        let Ok((recv_pos, mut recv_health, hitbox)) = units.get_mut(bullet.0) else {
+    for (entity, fireball, radius, pos) in &mut fireballs {
+        let Ok((recv_pos, _, hitbox)) = units.get_mut(fireball.0) else {
             // Цель умерла
             cmd.entity(entity).despawn();
             server
@@ -82,7 +82,12 @@ fn update_bullets(
             continue;
         }
 
-        recv_health.0 = recv_health.0.saturating_sub(50);
+        for (recv_pos, mut recv_health, hitbox) in &mut units {
+            if pos.distance(recv_pos) > radius.0 + hitbox.0 {
+                continue;
+            }
+            recv_health.0 = recv_health.0.saturating_sub(140);
+        }
         cmd.entity(entity).despawn();
         server
             .endpoint_mut()

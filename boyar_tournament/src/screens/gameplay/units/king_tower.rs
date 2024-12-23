@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{IntoTag, SpawnDirection, SpawnPosition};
+use super::{AssociatedTower, IntoTag, SpawnDirection};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_king_tower);
@@ -39,13 +39,10 @@ struct KingTower;
 
     Name(|| Name::new("Король на башне")),
     DynamicScale(|| DynamicScale(0.55)),
+    UnitState,
     ArenaHeightOffset(|| ArenaHeightOffset(3.)),
 )]
 struct KingTowerKing;
-
-/// Требуется для привязки короля к башне
-#[derive(Component)]
-struct AssociatedTower(Entity);
 
 #[derive(Resource, AssetCollection)]
 struct KingTowerAssets {
@@ -67,9 +64,8 @@ fn spawn_king_tower(
     assets: ResMut<KingTowerAssets>,
     mut network_mapping: ResMut<NetworkMapping>,
 ) {
-    let SpawnKingTower(entity, pos, player_num) = trigger.event();
+    let SpawnKingTower(entity, mut pos, player_num) = trigger.event();
 
-    let mut pos = self_num.spawn_pos(*pos);
     let direction = self_num.spawn_direction(*player_num);
 
     let (tower_sprite, king_sprite) = if pos.1 < 0. {
@@ -78,6 +74,7 @@ fn spawn_king_tower(
         (assets.enemy_tower.clone(), assets.enemy_king.clone())
     };
 
+    pos.1 += 0.01;
     let tower = cmd
         .spawn((
             KingTower,
@@ -94,7 +91,6 @@ fn spawn_king_tower(
         .spawn((
             KingTowerKing,
             pos,
-            UnitState::Idle,
             direction,
             AseSpriteAnimation {
                 animation: Animation::tag(direction.tag()),

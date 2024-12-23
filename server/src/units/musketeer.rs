@@ -4,36 +4,39 @@ use common::{
     ArenaPos, Health, PlayerNumber, Projectile, ServerChannel, ServerMessage, Unit, UnitState,
 };
 
-use crate::ai::{Attack, AttackTargetType, AttackType};
+use crate::ai::{AggroRadius, Attack, AttackTargetType, AttackType, Movement, StunnedTimer};
 
 use super::{Hitbox, UnitType};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(spawn_archer_tower);
+    app.add_observer(spawn_musketeer);
 }
 
 #[derive(Event)]
-pub struct SpawnArcherTower(pub ArenaPos, pub PlayerNumber);
+pub struct SpawnMusketeer(pub ArenaPos, pub PlayerNumber);
 
 #[derive(Component)]
 #[require(
-    Health(|| Health::new(1400)),
+    Health(|| Health::new(340)),
+    Movement(|| Movement::new(2.)),
+    AggroRadius(|| AggroRadius(7.)),
     UnitType(|| UnitType::Ground),
-    UnitState,
+    UnitState(|| UnitState::Moving),
     Attack(|| Attack::new(AttackType::Ranged(Projectile::Bullet),
-        AttackTargetType::All, 0.75, 8.5)),
-    Hitbox(|| Hitbox(1.5)),
+        AttackTargetType::All, 0.75, 6.)),
+    Hitbox(|| Hitbox(0.5)),
+    StunnedTimer,
 )]
-struct ArcherTower;
+struct Musketeer;
 
-fn spawn_archer_tower(
-    trigger: Trigger<SpawnArcherTower>,
+fn spawn_musketeer(
+    trigger: Trigger<SpawnMusketeer>,
     mut server: ResMut<QuinnetServer>,
     mut cmd: Commands,
 ) {
-    let &SpawnArcherTower(pos, owner) = trigger.event();
+    let &SpawnMusketeer(pos, owner) = trigger.event();
 
-    let entity = cmd.spawn((ArcherTower, pos, owner)).id();
+    let entity = cmd.spawn((Musketeer, pos, owner)).id();
 
     server
         .endpoint_mut()
@@ -41,7 +44,7 @@ fn spawn_archer_tower(
             ServerChannel::OrderedReliable,
             ServerMessage::SpawnUnit {
                 server_entity: entity,
-                unit: Unit::ArcherTower,
+                unit: Unit::Musketeer,
                 pos,
                 owner,
             },

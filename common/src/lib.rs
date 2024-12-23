@@ -1,6 +1,6 @@
 use std::{
     net::Ipv4Addr,
-    ops::{Sub, SubAssign},
+    ops::{AddAssign, Sub, SubAssign},
 };
 
 use bevy::{math::vec2, prelude::*};
@@ -38,6 +38,12 @@ impl SubAssign for ArenaPos {
         self.1 -= rhs.1;
     }
 }
+impl AddAssign for ArenaPos {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
 impl ArenaPos {
     pub fn normalize(&self) -> Self {
         let v = vec2(self.0, self.1).normalize();
@@ -45,6 +51,15 @@ impl ArenaPos {
     }
     pub fn mul(&self, n: f32) -> Self {
         ArenaPos(self.0 * n, self.1 * n)
+    }
+    pub fn distance(&self, rhs: &Self) -> f32 {
+        ((self.0 - rhs.0).powi(2) + (self.1 - rhs.1).powi(2)).sqrt()
+    }
+    pub fn direction(&self, rhs: &Self) -> Self {
+        if self.distance(rhs) < 0.01 {
+            return ArenaPos(0., 0.);
+        }
+        (*rhs - *self).normalize()
     }
 }
 
@@ -57,22 +72,27 @@ pub enum Card {
     Priest,
     Bats,
     BatHorde,
-    Giant,
-    Bomber,
+    SmallDragon,
+    Skeletons,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
 pub enum Unit {
     ArcherTower,
     KingTower,
+    Rus,
+    Musketeer,
+    Bat,
+    Priest,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize, Clone, Copy)]
 pub enum Projectile {
     Bullet,
+    Fireball,
 }
 
-#[derive(Component, Reflect, Serialize, Deserialize)]
+#[derive(Component, Reflect, Serialize, Deserialize, Clone, Copy)]
 #[reflect(Component)]
 pub struct Health(pub u16, pub u16); // Текущее и максимальное здоровье
 impl Health {
@@ -87,21 +107,33 @@ impl Default for Health {
     }
 }
 
-#[derive(Component, Debug, Serialize, Deserialize, Clone, Copy, Reflect)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone, Copy, Reflect, Default)]
 #[reflect(Component)]
 pub enum Direction {
+    #[default]
     Up,
     Down,
     Left,
     Right,
+}
+impl Direction {
+    pub fn opposite(&self) -> Self {
+        use Direction::*;
+        match self {
+            Up => Down,
+            Down => Up,
+            Left => Right,
+            Right => Left,
+        }
+    }
 }
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone, Copy, Reflect, Default)]
 #[reflect(Component)]
 pub enum UnitState {
     #[default]
-    Idle,
-    Moving,
+    Idle, // Для построек, а также отправляется клиенту для юнитов в стане
+    Moving, // Для всего остального
     Attacking,
 }
 
@@ -118,10 +150,10 @@ pub enum ClientMessage {
     Debug,
     Clone,
     Copy,
-    Default,
     Hash,
     Eq,
     PartialEq,
+    Default,
 )]
 pub enum PlayerNumber {
     #[default]
@@ -132,10 +164,24 @@ pub enum PlayerNumber {
 #[derive(Serialize, Deserialize)]
 pub enum ServerMessage {
     StartGame(PlayerNumber),
-    SpawnUnit(Entity, Unit, ArenaPos, PlayerNumber),
-    // 2 Entity - атакующий и цель
-    SpawnProjectile(Entity, Projectile, Entity, Entity, ArenaPos),
+    SpawnUnit {
+        server_entity: Entity,
+        unit: Unit,
+        pos: ArenaPos,
+        owner: PlayerNumber,
+    },
+    SpawnProjectile {
+        server_entity: Entity,
+        projectile: Projectile,
+        attacker: Entity,
+        receiver: Entity,
+        pos: ArenaPos,
+    },
     Despawn(Entity),
+    SyncEntities {
+        units: Vec<(Entity, ArenaPos, Direction, UnitState, Health)>,
+        projectiles: Vec<(Entity, ArenaPos)>,
+    },
 }
 
 #[repr(u8)]

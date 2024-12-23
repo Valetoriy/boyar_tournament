@@ -4,36 +4,39 @@ use common::{
     ArenaPos, Health, PlayerNumber, Projectile, ServerChannel, ServerMessage, Unit, UnitState,
 };
 
-use crate::ai::{Attack, AttackTargetType, AttackType};
+use crate::ai::{AggroRadius, Attack, AttackTargetType, AttackType, Movement, StunnedTimer};
 
 use super::{Hitbox, UnitType};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(spawn_king_tower);
+    app.add_observer(spawn_priest);
 }
 
 #[derive(Event)]
-pub struct SpawnKingTower(pub ArenaPos, pub PlayerNumber);
+pub struct SpawnPriest(pub ArenaPos, pub PlayerNumber);
 
 #[derive(Component)]
 #[require(
-    Health(|| Health::new(2400)),
+    Health(|| Health::new(400)),
+    Movement(|| Movement::new(2.)),
+    AggroRadius(|| AggroRadius(7.)),
     UnitType(|| UnitType::Ground),
-    UnitState,
+    UnitState(|| UnitState::Moving),
     Attack(|| Attack::new(AttackType::Ranged(Projectile::Fireball),
-        AttackTargetType::All, 1., 6.)),
-    Hitbox(|| Hitbox(2.)),
+        AttackTargetType::All, 0.75, 6.)),
+    Hitbox(|| Hitbox(0.5)),
+    StunnedTimer,
 )]
-struct KingTower;
+struct Priest;
 
-fn spawn_king_tower(
-    trigger: Trigger<SpawnKingTower>,
+fn spawn_priest(
+    trigger: Trigger<SpawnPriest>,
     mut server: ResMut<QuinnetServer>,
     mut cmd: Commands,
 ) {
-    let &SpawnKingTower(pos, owner) = trigger.event();
+    let &SpawnPriest(pos, owner) = trigger.event();
 
-    let entity = cmd.spawn((KingTower, pos, owner)).id();
+    let entity = cmd.spawn((Priest, pos, owner)).id();
 
     server
         .endpoint_mut()
@@ -41,7 +44,7 @@ fn spawn_king_tower(
             ServerChannel::OrderedReliable,
             ServerMessage::SpawnUnit {
                 server_entity: entity,
-                unit: Unit::KingTower,
+                unit: Unit::Priest,
                 pos,
                 owner,
             },

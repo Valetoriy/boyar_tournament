@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{IntoTag, SpawnDirection, SpawnPosition};
+use super::{AssociatedTower, IntoTag, SpawnDirection};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_archer_tower);
@@ -39,13 +39,10 @@ struct ArcherTower;
 
     Name(|| Name::new("Лучник на башне")),
     DynamicScale(|| DynamicScale(0.55)),
+    UnitState,
     ArenaHeightOffset(|| ArenaHeightOffset(3.1)),
 )]
 struct ArcherTowerArcher;
-
-/// Требуется для привязки лучника к башне
-#[derive(Component)]
-struct AssociatedTower(Entity);
 
 #[derive(Resource, AssetCollection)]
 struct ArcherTowerAssets {
@@ -67,9 +64,8 @@ fn spawn_archer_tower(
     assets: ResMut<ArcherTowerAssets>,
     mut network_mapping: ResMut<NetworkMapping>,
 ) {
-    let SpawnArcherTower(entity, pos, player_num) = trigger.event();
+    let SpawnArcherTower(entity, mut pos, player_num) = trigger.event();
 
-    let mut pos = self_num.spawn_pos(*pos);
     let direction = self_num.spawn_direction(*player_num);
 
     let (tower_sprite, archer_sprite) = if pos.1 < 0. {
@@ -78,6 +74,7 @@ fn spawn_archer_tower(
         (assets.enemy_tower.clone(), assets.enemy_archer.clone())
     };
 
+    pos.1 += 0.01;
     let tower = cmd
         .spawn((
             ArcherTower,
@@ -94,7 +91,6 @@ fn spawn_archer_tower(
         .spawn((
             ArcherTowerArcher,
             pos,
-            UnitState::Idle,
             direction,
             AseSpriteAnimation {
                 animation: Animation::tag(direction.tag()),

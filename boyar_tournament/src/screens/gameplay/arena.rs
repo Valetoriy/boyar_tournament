@@ -6,7 +6,7 @@ use bevy_asset_loader::prelude::*;
 use crate::{scaling::DynamicScale, screens::GameState};
 
 use crate::scaling::DrawRegion;
-use common::ArenaPos;
+use common::{ArenaPos, Direction, UnitState};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<ArenaPos>();
@@ -31,6 +31,23 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         draw_arena_region_outline.run_if(in_state(GameState::Gameplay)),
     );
+
+    app.add_systems(OnEnter(GameState::Gameplay), spawn_test);
+}
+
+fn spawn_test(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
+    cmd.spawn((
+        Name::new("TEST"),
+        ArenaPos(0., -4.),
+        UnitState::Idle,
+        Direction::Down,
+        DynamicScale(1.),
+        ArenaHeightOffset(0.),
+        AseSpriteAnimation {
+            animation: Animation::tag("u"),
+            aseprite: arena_assets.test.clone(),
+        },
+    ));
 }
 
 #[derive(AssetCollection, Resource)]
@@ -39,6 +56,8 @@ struct ArenaAssets {
     arena: Handle<Aseprite>,
     // #[asset(path = "arena/battle.ogg")]
     // battle_music: Handle<AudioSource>,
+    #[asset(path = "units/priest/priest.aseprite")]
+    test: Handle<Aseprite>,
 }
 
 fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
@@ -59,7 +78,7 @@ fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
     // ));
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone, Copy)]
 #[reflect(Component)]
 pub struct ArenaHeightOffset(pub f32);
 

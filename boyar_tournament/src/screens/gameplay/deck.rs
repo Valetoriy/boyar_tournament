@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::input_just_released, prelude::*};
 use bevy_aseprite_ultra::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_quinnet::client::QuinnetClient;
-use common::{ArenaPos, Card, ClientChannel, ClientMessage};
+use common::{ArenaPos, Card, ClientChannel, ClientMessage, PlayerNumber};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
@@ -34,8 +34,8 @@ pub(super) fn plugin(app: &mut App) {
         Priest,
         Bats,
         BatHorde,
-        Giant,
-        Bomber,
+        SmallDragon,
+        Skeletons,
     ];
     cards.shuffle(&mut thread_rng());
     app.insert_resource(Deck(cards));
@@ -126,8 +126,8 @@ impl IntoTag for Card {
             Card::Priest => "priest",
             Card::Bats => "bats",
             Card::BatHorde => "bat_horde",
-            Card::Giant => "giant",
-            Card::Bomber => "bomber",
+            Card::SmallDragon => "small_dragon",
+            Card::Skeletons => "skeletons",
         };
         s.into()
     }
@@ -178,6 +178,7 @@ fn play_card(
     mut deck: ResMut<Deck>,
     mut client: ResMut<QuinnetClient>,
     mut cmd: Commands,
+    player_num: Res<PlayerNumber>,
 ) {
     let Some(mouse_pos) = mouse_pos.0 else {
         return;
@@ -189,8 +190,12 @@ fn play_card(
     let card = deck.0[index];
 
     // Ставим точку в центр клетки
-    let x = mouse_pos.0.floor() + 0.5;
-    let y = mouse_pos.1.floor() + 0.5;
+    let mut x = mouse_pos.0.floor() + 0.5;
+    let mut y = mouse_pos.1.floor().clamp(-16., -2.) + 0.5;
+    if let PlayerNumber::Two = *player_num {
+        x *= -1.;
+        y *= -1.;
+    }
 
     client
         .connection_mut()
