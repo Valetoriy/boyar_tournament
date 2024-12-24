@@ -39,6 +39,7 @@ fn spawn_text(
     text: &str,
     font: Handle<Font>,
     font_size: f32,
+    color: Color,
     dynamic_scale: f32,
     dynamic_transform: (f32, f32),
     state: GameState,
@@ -46,7 +47,7 @@ fn spawn_text(
     cmd.spawn((
         Text2d::new(text),
         TextFont::from_font(font.clone()).with_font_size(font_size),
-        TextColor(Color::srgb(1., 1., 0.)),
+        TextColor(color),
         StateScoped(state),
         DynamicScale(dynamic_scale),
         DynamicTransform(dynamic_transform.0, dynamic_transform.1),

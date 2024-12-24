@@ -19,8 +19,10 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<Deck>();
     app.register_type::<DeckIndex>();
     app.register_type::<SelectedCard>();
+    app.register_type::<ElixirCounter>();
 
     app.init_resource::<SelectedCard>();
+    app.init_resource::<ElixirCounter>();
 
     app.configure_loading_state(
         LoadingStateConfig::new(GameState::Loading).load_collection::<CardsAssets>(),
@@ -49,8 +51,15 @@ pub(super) fn plugin(app: &mut App) {
             ),
         ),
     );
+    app.add_systems(
+        Update,
+        update_elixir_counter.run_if(in_state(GameState::Gameplay)),
+    );
 
-    app.add_systems(OnEnter(GameState::Gameplay), spawn_card_hand);
+    app.add_systems(
+        OnEnter(GameState::Gameplay),
+        (spawn_card_hand, spawn_elixir_counter),
+    );
     app.add_observer(update_card_hand);
 }
 
@@ -97,6 +106,7 @@ fn spawn_card_hand(
         "След.",
         font.font.clone(),
         35.,
+        Color::srgb(1., 1., 0.),
         1.,
         (-3.8, -5.05),
         GameState::Gameplay,
@@ -112,6 +122,46 @@ fn spawn_card_hand(
         DynamicScale(0.8),
         DynamicTransform(-3.8, -5.7),
     ));
+}
+
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
+struct ElixirCounter(u8, Timer);
+impl Default for ElixirCounter {
+    fn default() -> Self {
+        Self(0, Timer::from_seconds(1.5, TimerMode::Repeating))
+    }
+}
+
+fn spawn_elixir_counter(mut cmd: Commands, font: Res<FontAssets>) {
+    spawn_text(
+        &mut cmd,
+        "0",
+        font.font.clone(),
+        35.,
+        Color::srgb(1., 0., 1.),
+        1.,
+        (0.7, -7.7),
+        GameState::Gameplay,
+    );
+}
+
+fn update_elixir_counter(
+    mut counter: ResMut<ElixirCounter>,
+    mut text: Query<&mut Text2d>,
+    time: Res<Time>,
+) {
+    if counter.1.tick(time.delta()).just_finished() {
+        if counter.0 < 10 {
+            counter.0 += 1;
+        }
+    }
+
+    for mut text in &mut text {
+        if text.0 != "След." {
+            text.0 = counter.0.to_string();
+        }
+    }
 }
 
 trait IntoTag {
@@ -130,6 +180,23 @@ impl IntoTag for Card {
             Card::Giant => "giant",
         };
         s.into()
+    }
+}
+trait ElixirCost {
+    fn elixir_cost(&self) -> u8;
+}
+impl ElixirCost for Card {
+    fn elixir_cost(&self) -> u8 {
+        match self {
+            Card::Rus => 3,
+            Card::Musketeer => 4,
+            Card::ThreeMusketeers => 9,
+            Card::Priest => 5,
+            Card::Bats => 3,
+            Card::BatHorde => 5,
+            Card::Bomber => 3,
+            Card::Giant => 6,
+        }
     }
 }
 
@@ -179,6 +246,7 @@ fn play_card(
     mut client: ResMut<QuinnetClient>,
     mut cmd: Commands,
     player_num: Res<PlayerNumber>,
+    mut elixir: ResMut<ElixirCounter>,
 ) {
     let Some(mouse_pos) = mouse_pos.0 else {
         return;
@@ -188,6 +256,12 @@ fn play_card(
     };
     let index = index as usize;
     let card = deck.0[index];
+
+    let cost = card.elixir_cost();
+    if cost > elixir.0 {
+        return;
+    }
+    elixir.0 -= cost;
 
     // Ставим точку в центр клетки
     let mut x = mouse_pos.0.floor() + 0.5;

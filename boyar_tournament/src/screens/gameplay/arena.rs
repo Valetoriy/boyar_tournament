@@ -6,7 +6,7 @@ use bevy_asset_loader::prelude::*;
 use crate::{scaling::DynamicScale, screens::GameState};
 
 use crate::scaling::DrawRegion;
-use common::{ArenaPos, Direction, UnitState};
+use common::ArenaPos;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<ArenaPos>();
@@ -31,33 +31,14 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         draw_arena_region_outline.run_if(in_state(GameState::Gameplay)),
     );
-
-    app.add_systems(OnEnter(GameState::Gameplay), spawn_test);
-}
-
-fn spawn_test(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
-    cmd.spawn((
-        Name::new("TEST"),
-        ArenaPos(0., -4.),
-        UnitState::Idle,
-        Direction::Down,
-        DynamicScale(1.),
-        ArenaHeightOffset(0.),
-        AseSpriteAnimation {
-            animation: Animation::tag("d"),
-            aseprite: arena_assets.test.clone(),
-        },
-    ));
 }
 
 #[derive(AssetCollection, Resource)]
 struct ArenaAssets {
     #[asset(path = "arena/winter_arena.aseprite")]
     arena: Handle<Aseprite>,
-    // #[asset(path = "arena/battle.ogg")]
-    // battle_music: Handle<AudioSource>,
-    #[asset(path = "units/giant/giant.aseprite")]
-    test: Handle<Aseprite>,
+    #[asset(path = "arena/battle.ogg")]
+    battle_music: Handle<AudioSource>,
 }
 
 fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
@@ -71,11 +52,11 @@ fn spawn_arena(mut cmd: Commands, arena_assets: ResMut<ArenaAssets>) {
         DynamicScale(1.),
         Transform::from_translation(Vec3::ZERO.with_z(-0.5)),
     ));
-    // cmd.spawn((
-    //     AudioPlayer::new(arena_assets.battle_music.clone()),
-    //     PlaybackSettings::LOOP,
-    //     StateScoped(GameState::Gameplay),
-    // ));
+    cmd.spawn((
+        AudioPlayer::new(arena_assets.battle_music.clone()),
+        PlaybackSettings::LOOP,
+        StateScoped(GameState::Gameplay),
+    ));
 }
 
 #[derive(Component, Reflect, Clone, Copy)]
